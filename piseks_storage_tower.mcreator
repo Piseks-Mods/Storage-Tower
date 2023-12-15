@@ -1,0 +1,67 @@
+{
+  "mod_elements": [
+    {
+      "name": "StorageCrate",
+      "type": "block",
+      "sortid": 1,
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "storage_crate"
+    },
+    {
+      "name": "StorageCrateCraft",
+      "type": "recipe",
+      "sortid": 2,
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "storage_crate_craft"
+    },
+    {
+      "name": "StorageControler",
+      "type": "block",
+      "sortid": 3,
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "storage_controler"
+    },
+    {
+      "name": "StorageControlerCraft",
+      "type": "recipe",
+      "sortid": 4,
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "storage_controler_craft"
+    }
+  ],
+  "variable_elements": [],
+  "sound_elements": [],
+  "language_map": {
+    "en_us": {
+      "block.piseks_storage_tower.storage_controler": "Storage Controler",
+      "block.piseks_storage_tower.storage_crate": "Storage Crate"
+    }
+  },
+  "foldersRoot": {
+    "name": "~",
+    "children": []
+  },
+  "workspaceSettings": {
+    "modid": "piseks_storage_tower",
+    "modName": "Pisek\u0027s Storage Tower",
+    "version": "1.0.0.0.1",
+    "author": "Písek Pískovec",
+    "websiteURL": "https://github.com/Piseks-Mods/Storage-Tower",
+    "license": "MIT License",
+    "disableForgeVersionCheck": true,
+    "serverSideOnly": false,
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "mcreatorDependencies": [],
+    "currentGenerator": "forge-1.16.5",
+    "credits": "Simple storage system",
+    "modElementsPackage": "cz.pisekpiskovec.storagetower",
+    "lockBaseModFiles": false
+  },
+  "mcreatorVersion": 202200348217
+}

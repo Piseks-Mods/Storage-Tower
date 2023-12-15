@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "piseks_storage_tower:blocks/storage_crate_side",
+    "up": "piseks_storage_tower:blocks/storage_crate_side",
+    "north": "piseks_storage_tower:blocks/storage_crate_side",
+    "east": "piseks_storage_tower:blocks/storage_crate_side",
+    "south": "piseks_storage_tower:blocks/storage_crate_side",
+    "west": "piseks_storage_tower:blocks/storage_crate_side",
+    "particle": "piseks_storage_tower:blocks/storage_crate_side"
+  }
+}
