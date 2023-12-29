@@ -4,11 +4,13 @@ license="MIT License"
 
 [[mods]]
 modId="piseks_storage_tower"
-version="1.0"
+version="1.0.0"
 displayName="Pisek's Storage Tower"
 credits="Simple storage system"
-displayURL="https://mcreator.net"
+displayURL="https://github.com/Piseks-Mods/Storage-Tower"
+logoFile="logo.png"
 authors="Písek Pískovec"
+description='''Simple storage system'''
 
 [[dependencies.piseks_storage_tower]]
     modId="minecraft"

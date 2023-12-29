@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "piseks_storage_tower:block/storage_controler"
+    },
+    "facing=east": {
+      "model": "piseks_storage_tower:block/storage_controler",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "piseks_storage_tower:block/storage_controler",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "piseks_storage_tower:block/storage_controler",
+      "y": 270
     }
   }
 }
