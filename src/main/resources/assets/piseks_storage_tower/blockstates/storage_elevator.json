@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "piseks_storage_tower:block/storage_elevator"
+    }
+  }
+}
