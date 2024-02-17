@@ -662,13 +662,13 @@
       }
     ],
     "onOpen": {
-      "name": "StorageControlerLoad"
+      "name": "StorageControlerOpenManager"
     },
     "onTick": {
       "name": "StorageControlerSync"
     },
     "onClosed": {
-      "name": "StorageControlerUpdate"
+      "name": "StorageControlerCloseManager"
     },
     "gridSettings": {
       "sx": 18,

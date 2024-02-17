@@ -39,8 +39,9 @@ import java.util.AbstractMap;
 import cz.pisekpiskovec.storagetower.procedures.StorageControlerUpdateProcedure;
 import cz.pisekpiskovec.storagetower.procedures.StorageControlerUpProcedure;
 import cz.pisekpiskovec.storagetower.procedures.StorageControlerSyncProcedure;
-import cz.pisekpiskovec.storagetower.procedures.StorageControlerLoadProcedure;
+import cz.pisekpiskovec.storagetower.procedures.StorageControlerOpenManagerProcedure;
 import cz.pisekpiskovec.storagetower.procedures.StorageControlerDownProcedure;
+import cz.pisekpiskovec.storagetower.procedures.StorageControlerCloseManagerProcedure;
 import cz.pisekpiskovec.storagetower.PiseksStorageTowerModElements;
 import cz.pisekpiskovec.storagetower.PiseksStorageTowerMod;
 
@@ -399,7 +400,7 @@ public class StorageControlerGUIGui extends PiseksStorageTowerModElements.ModEle
 			for (si = 0; si < 9; ++si)
 				this.addSlot(new Slot(inv, si, 0 + 8 + si * 18, 28 + 142));
 
-			StorageControlerLoadProcedure.executeProcedure(Stream
+			StorageControlerOpenManagerProcedure.executeProcedure(Stream
 					.of(new AbstractMap.SimpleEntry<>("world", world), new AbstractMap.SimpleEntry<>("x", x), new AbstractMap.SimpleEntry<>("y", y),
 							new AbstractMap.SimpleEntry<>("z", z))
 					.collect(HashMap::new, (_m, _e) -> _m.put(_e.getKey(), _e.getValue()), Map::putAll));
@@ -533,7 +534,7 @@ public class StorageControlerGUIGui extends PiseksStorageTowerModElements.ModEle
 		public void onContainerClosed(PlayerEntity playerIn) {
 			super.onContainerClosed(playerIn);
 
-			StorageControlerUpdateProcedure.executeProcedure(Stream
+			StorageControlerCloseManagerProcedure.executeProcedure(Stream
 					.of(new AbstractMap.SimpleEntry<>("world", world), new AbstractMap.SimpleEntry<>("x", x), new AbstractMap.SimpleEntry<>("y", y),
 							new AbstractMap.SimpleEntry<>("z", z))
 					.collect(HashMap::new, (_m, _e) -> _m.put(_e.getKey(), _e.getValue()), Map::putAll));

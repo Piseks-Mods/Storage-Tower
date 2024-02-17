@@ -45,10 +45,15 @@ import net.minecraft.block.Block;
 
 import javax.annotation.Nullable;
 
+import java.util.stream.Stream;
 import java.util.stream.IntStream;
+import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Collections;
+import java.util.AbstractMap;
 
+import cz.pisekpiskovec.storagetower.procedures.StorageCrateRedstoneLockProcedure;
 import cz.pisekpiskovec.storagetower.PiseksStorageTowerModElements;
 
 @PiseksStorageTowerModElements.ModElement.Tag
@@ -89,8 +94,30 @@ public class StorageCrateBlock extends PiseksStorageTowerModElements.ModElement 
 		}
 
 		@Override
+		public boolean canProvidePower(BlockState state) {
+			return true;
+		}
+
+		@Override
+		public int getWeakPower(BlockState blockstate, IBlockReader blockAccess, BlockPos pos, Direction direction) {
+			int x = pos.getX();
+			int y = pos.getY();
+			int z = pos.getZ();
+			World world = (World) blockAccess;
+			return (int) StorageCrateRedstoneLockProcedure.executeProcedure(Stream
+					.of(new AbstractMap.SimpleEntry<>("world", world), new AbstractMap.SimpleEntry<>("x", x), new AbstractMap.SimpleEntry<>("y", y),
+							new AbstractMap.SimpleEntry<>("z", z))
+					.collect(HashMap::new, (_m, _e) -> _m.put(_e.getKey(), _e.getValue()), Map::putAll));
+		}
+
+		@Override
 		public PushReaction getPushReaction(BlockState state) {
 			return PushReaction.BLOCK;
+		}
+
+		@Override
+		public boolean canConnectRedstone(BlockState state, IBlockReader world, BlockPos pos, Direction side) {
+			return true;
 		}
 
 		@Override
