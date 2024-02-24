@@ -88,7 +88,14 @@ public class StorageControlerDownProcedure {
 								new AbstractMap.SimpleEntry<>("y", y), new AbstractMap.SimpleEntry<>("z", z))
 						.collect(HashMap::new, (_m, _e) -> _m.put(_e.getKey(), _e.getValue()), Map::putAll));
 		for (int index0 = 0; index0 < (int) (yLvl); index0++) {
-			if ((world.getBlockState(new BlockPos(x, yLvl, z))).getBlock() == StorageCrateBlock.block) {
+			if ((world.getBlockState(new BlockPos(x, yLvl, z))).getBlock() == StorageCrateBlock.block && (new Object() {
+				public boolean getValue(IWorld world, BlockPos pos, String tag) {
+					TileEntity tileEntity = world.getTileEntity(pos);
+					if (tileEntity != null)
+						return tileEntity.getTileData().getBoolean(tag);
+					return false;
+				}
+			}.getValue(world, new BlockPos(x, yLvl, z), "IsInspected")) == false) {
 				if (!world.isRemote()) {
 					BlockPos _bp = new BlockPos(x, y, z);
 					TileEntity _tileEntity = world.getTileEntity(_bp);

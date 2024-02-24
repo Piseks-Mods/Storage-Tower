@@ -48,7 +48,14 @@ public class StorageElevatorUpProcedure {
 			}
 		}.getValue(world, new BlockPos(x, y, z), "LevelInspector") + 1);
 		for (int index0 = 0; index0 < (int) (256 - yLvl); index0++) {
-			if ((world.getBlockState(new BlockPos(x, yLvl, z))).getBlock() == StorageCrateBlock.block) {
+			if ((world.getBlockState(new BlockPos(x, yLvl, z))).getBlock() == StorageCrateBlock.block && (new Object() {
+				public boolean getValue(IWorld world, BlockPos pos, String tag) {
+					TileEntity tileEntity = world.getTileEntity(pos);
+					if (tileEntity != null)
+						return tileEntity.getTileData().getBoolean(tag);
+					return false;
+				}
+			}.getValue(world, new BlockPos(x, yLvl, z), "IsInspected")) == false) {
 				if (!world.isRemote()) {
 					BlockPos _bp = new BlockPos(x, y, z);
 					TileEntity _tileEntity = world.getTileEntity(_bp);
