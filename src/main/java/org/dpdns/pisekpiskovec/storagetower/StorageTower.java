@@ -11,6 +11,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
+import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
+import org.dpdns.pisekpiskovec.storagetower.item.ModItems;
+import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -26,6 +30,11 @@ public class StorageTower {
     IEventBus modEventBus = context.getModEventBus();
 
     modEventBus.addListener(this::commonSetup);
+
+    ModBlocks.register(modEventBus);
+    ModBlockEntities.register(modEventBus);
+    ModItems.register(modEventBus);
+    ModMenuTypes.register(modEventBus);
 
     MinecraftForge.EVENT_BUS.register(this);
     modEventBus.addListener(this::addCreative);
