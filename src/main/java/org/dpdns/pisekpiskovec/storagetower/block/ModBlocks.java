@@ -3,6 +3,7 @@ package org.dpdns.pisekpiskovec.storagetower.block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -17,6 +18,17 @@ public class ModBlocks {
             DeferredRegister.create(ForgeRegistries.BLOCKS, StorageTower.MOD_ID);
 
     // Block registrations goes here
+    public static final RegistryObject<Block> STORAGE_CRATE = registerBlock("storage_crate",
+            () -> new StorageCrateBlock(BlockBehaviour.Properties.of().strength(3.0f).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> STORAGE_CONTROLLER = registerBlock("storage_controller",
+            () -> new StorageControllerBlock(BlockBehaviour.Properties.of().strength(3.0f).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> STORAGE_INTERFACE = registerBlock("storage_interface",
+            () -> new StorageInterfaceBlock(BlockBehaviour.Properties.of().strength(3.0F).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> STORAGE_CONTROLLER_CRAFTING = registerBlock("storage_controller_crafting",
+            () -> new StorageCraftingControllerBlock(BlockBehaviour.Properties.of().strength(3.0F).requiresCorrectToolForDrops()));
 
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);
