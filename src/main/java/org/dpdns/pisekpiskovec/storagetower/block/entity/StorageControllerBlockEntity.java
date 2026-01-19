@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
+import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageControllerMenu;
 import org.jetbrains.annotations.Nullable;
 
 public class StorageControllerBlockEntity extends BlockEntity implements MenuProvider {
