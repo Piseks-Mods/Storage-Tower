@@ -1,5 +1,6 @@
 package org.dpdns.pisekpiskovec.storagetower.block;
 
+import com.lowdragmc.lowdraglib.gui.modular.ModularUIGuiContainer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.network.NetworkHooks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -36,10 +36,10 @@ public class StorageControllerBlock extends BaseEntityBlock {
 
     @Override
     public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        if(pLevel.isClientSide && pPlayer instanceof ServerPlayer serverPlayer) {
+        if (!pLevel.isClientSide && pPlayer instanceof ServerPlayer serverPlayer) {
             BlockEntity be = pLevel.getBlockEntity(pPos);
             if (be instanceof StorageControllerBlockEntity controller) {
-                NetworkHooks.openScreen(serverPlayer, controller, pPos);
+                ModularUIGuiContainer.open(serverPlayer, controller);
             }
         }
         return InteractionResult.sidedSuccess(pLevel.isClientSide);
@@ -47,15 +47,14 @@ public class StorageControllerBlock extends BaseEntityBlock {
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        return createTickerHelper(pBlockEntityType, ModBlockEntities.STORAGE_CONTROLLER.get(),
-                (lvl, pos, st, be) -> be.tick(lvl, pos, st));
+        return createTickerHelper(pBlockEntityType, ModBlockEntities.STORAGE_CONTROLLER.get(), (lvl, pos, st, be) -> be.tick(lvl, pos, st));
     }
 
     @Override
     public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pMovedByPiston) {
         if (pState.getBlock() != pNewState.getBlock()) {
             BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
-            if (blockEntity instanceof  StorageControllerBlockEntity controller) {
+            if (blockEntity instanceof StorageControllerBlockEntity controller) {
                 controller.invalidateTower();
             }
         }

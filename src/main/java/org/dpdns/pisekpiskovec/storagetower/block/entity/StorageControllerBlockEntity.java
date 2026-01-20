@@ -1,18 +1,16 @@
 package org.dpdns.pisekpiskovec.storagetower.block.entity;
 
+import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
+import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
+import com.lowdragmc.lowdraglib.syncdata.IManaged;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
-import org.jetbrains.annotations.Nullable;
 
-public class StorageControllerBlockEntity extends BlockEntity implements MenuProvider {
+public class StorageControllerBlockEntity extends BlockEntity implements IUIHolder, IManaged {
     private int scanCooldown = 0;
     private TowerNetwork tower;
 
@@ -49,12 +47,22 @@ public class StorageControllerBlockEntity extends BlockEntity implements MenuPro
     }
 
     @Override
-    public Component getDisplayName() {
-        return Component.translatable("container.towerstorage.storage_controller");
+    public ModularUI createUI(Player player) {
+        return new StorageControllerUI(this, player).createUI();
     }
 
     @Override
-    public @Nullable AbstractContainerMenu createMenu(int pContainerId, Inventory pPlayerInventory, Player pPlayer) {
-        return new StorageControllerMenu(pContainerId, pPlayerInventory, this);
+    public boolean isInvalid() {
+        return isRemoved();
+    }
+
+    @Override
+    public boolean isRemote() {
+        return level != null && level.isClientSide;
+    }
+
+    @Override
+    public void markAsDirty() {
+        setChanged();
     }
 }

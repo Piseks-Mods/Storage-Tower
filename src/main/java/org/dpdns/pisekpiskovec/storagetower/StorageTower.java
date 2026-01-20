@@ -33,7 +33,6 @@ public class StorageTower {
     ModBlocks.register(modEventBus);
     ModBlockEntities.register(modEventBus);
     ModItems.register(modEventBus);
-    ModMenuTypes.register(modEventBus);
 
     MinecraftForge.EVENT_BUS.register(this);
     modEventBus.addListener(this::addCreative);
