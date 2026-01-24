@@ -7,6 +7,8 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.dpdns.pisekpiskovec.storagetower.StorageTower;
+import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageControllerMenu;
+import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageCraftingControllerMenu;
 
 public class ModMenuTypes {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, StorageTower.MOD_ID);

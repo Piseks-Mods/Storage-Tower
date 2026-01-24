@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.StorageTower;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
+import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageControllerMenu;
 
 import java.util.List;
 
@@ -35,7 +36,8 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
 
     @Override
     public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        renderBackground(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        //renderBackground(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY);
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         renderTooltip(pGuiGraphics, pMouseX, pMouseY);
 

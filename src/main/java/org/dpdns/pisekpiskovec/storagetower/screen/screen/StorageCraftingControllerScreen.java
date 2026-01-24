@@ -9,16 +9,16 @@ import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.StorageTower;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
+import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageCraftingControllerMenu;
 
 import java.util.List;
 
 public class StorageCraftingControllerScreen extends AbstractContainerScreen<StorageCraftingControllerMenu> {
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation(StorageTower.MOD_ID, "textures/gui/storage_crafting_controller.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(StorageTower.MOD_ID, "textures/gui/storage_crafting_controller.png");
 
     private final StorageCraftingControllerBlockEntity blockEntity;
 
-    public StorageCraftingControllerScreen(StorageCraftingControllerMenu menu, Inventory playerInv, Component title){
+    public StorageCraftingControllerScreen(StorageCraftingControllerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.blockEntity = menu.getBlockEntity();
         this.imageHeight = 166;
@@ -42,7 +42,8 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
 
     @Override
     public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        renderBackground(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        //renderBackground(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY);
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         renderTooltip(pGuiGraphics, pMouseX, pMouseY);
 
@@ -67,11 +68,10 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
             for (int i = 0; i < Math.min(items.size(), 3); i++) /* Only 3 slots */ {
                 ItemStack stack = items.get(i);
                 if (!stack.isEmpty()) {
-                    int slotX = startX;
                     int slotY = startY + i * 18;
 
-                    pGuiGraphics.renderItem(stack, slotX, slotY);
-                    pGuiGraphics.renderItemDecorations(this.font, stack, slotX, slotY);
+                    pGuiGraphics.renderItem(stack, startX, slotY);
+                    pGuiGraphics.renderItemDecorations(this.font, stack, startX, slotY);
                 }
             }
         }
