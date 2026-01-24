@@ -121,14 +121,6 @@ repositories {
     // flatDir {
     //     dir 'libs'
     // }
-
-    maven {
-        name "firstdarkdev"
-        url "https://maven.firstdark.dev/snapshots"
-        content {
-            includeGroup 'com.lowdragmc.ldlib'
-        }
-    }
 }
 
 dependencies {
@@ -153,9 +145,6 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-
-    runtimeOnly fg.deobf("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
-    compileOnly fg.deobf("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
