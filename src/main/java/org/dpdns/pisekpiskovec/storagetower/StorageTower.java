@@ -1,6 +1,7 @@
 package org.dpdns.pisekpiskovec.storagetower;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -14,6 +15,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.item.ModItems;
+import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -33,6 +35,7 @@ public class StorageTower {
         ModBlocks.register(modEventBus);
         ModBlockEntities.register(modEventBus);
         ModItems.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
 
         MinecraftForge.EVENT_BUS.register(this);
         modEventBus.addListener(this::addCreative);
