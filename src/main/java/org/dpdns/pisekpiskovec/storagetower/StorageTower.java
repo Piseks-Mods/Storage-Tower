@@ -56,6 +56,8 @@ public class StorageTower {
 
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
+            MenuScreens.register(ModMenuTypes.STORAGE_CONTROLLER.get(), StorageControllerScreen::new);
+            MenuScreens.register(ModMenuTypes.STORAGE_CONTROLLER_CRAFTING.get(), StorageCraftingControllerScreen::new);
         }
     }
 }
