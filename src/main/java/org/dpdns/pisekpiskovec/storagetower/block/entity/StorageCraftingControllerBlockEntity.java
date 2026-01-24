@@ -3,11 +3,14 @@ package org.dpdns.pisekpiskovec.storagetower.block.entity;
 import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.syncdata.IManaged;
+import com.lowdragmc.lowdraglib.syncdata.IManagedStorage;
+import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.dpdns.pisekpiskovec.storagetower.client.ui.StorageCraftingControllerUI;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 
 public class StorageCraftingControllerBlockEntity extends BlockEntity implements IUIHolder, IManaged {
@@ -64,5 +67,20 @@ public class StorageCraftingControllerBlockEntity extends BlockEntity implements
     @Override
     public void markAsDirty() {
         setChanged();
+    }
+
+    @Override
+    public ManagedFieldHolder getFieldHolder() {
+        return null;
+    }
+
+    @Override
+    public IManagedStorage getSyncStorage() {
+        return null;
+    }
+
+    @Override
+    public void onChanged() {
+
     }
 }

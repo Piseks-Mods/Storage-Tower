@@ -1,16 +1,15 @@
 package org.dpdns.pisekpiskovec.storagetower.client.ui;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib.gui.widget.*;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class StorageControllerUI {
     private final StorageControllerBlockEntity blockEntity;
@@ -27,24 +26,24 @@ public class StorageControllerUI {
         // Title
         builder.widget(new LabelWidget(8, 6, "Storage Controller").setTextColor(0x404040));
 
-        // Storage display area - scorllable grid
+        // Storage display area - scrollable grid
         WidgetGroup storageGroup = new WidgetGroup(8, 18, 160, 60);
         DraggableScrollableWidgetGroup scrollable = new DraggableScrollableWidgetGroup(0, 0, 160, 60);
         scrollable.setBackground(new ColorRectWidget(0, 0, 160, 60, 0xFF202020));
 
         // Add items from tower network
         TowerNetwork network = blockEntity.getTower();
-        if(network != null) {
+        if (network != null) {
             List<ItemStack> items = network.getAllItems();
             int x = 0, y = 0;
 
-            for(ItemStack stack : items) {
-                if(!stack.isEmpty()) {
+            for (ItemStack stack : items) {
+                if (!stack.isEmpty()) {
                     ItemStackWidget itemWidget = new ItemStackWidget(x * 18 + 1, y * 18 + 1, stack);
                     scrollable.addWidget(itemWidget);
 
                     x++;
-                    if(x >= 8) {
+                    if (x >= 8) {
                         x = 0;
                         y++;
                     }
