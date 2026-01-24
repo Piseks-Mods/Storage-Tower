@@ -1,10 +1,10 @@
 package org.dpdns.pisekpiskovec.storagetower.block;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUIGuiContainer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class StorageCraftingControllerBlock extends BaseEntityBlock {
         if (!pLevel.isClientSide && pPlayer instanceof ServerPlayer serverPlayer) {
             BlockEntity entity = pLevel.getBlockEntity(pPos);
             if (entity instanceof StorageCraftingControllerBlockEntity controller) {
-                ModularUIGuiContainer.open(serverPlayer, controller);
+                NetworkHooks.openScreen(serverPlayer, (MenuProvider) controller, pPos);
             }
         }
         return InteractionResult.sidedSuccess(pLevel.isClientSide);
