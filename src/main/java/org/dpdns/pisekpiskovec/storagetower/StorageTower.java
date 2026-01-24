@@ -16,6 +16,8 @@ import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.item.ModItems;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
+import org.dpdns.pisekpiskovec.storagetower.screen.screen.StorageControllerScreen;
+import org.dpdns.pisekpiskovec.storagetower.screen.screen.StorageCraftingControllerScreen;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
