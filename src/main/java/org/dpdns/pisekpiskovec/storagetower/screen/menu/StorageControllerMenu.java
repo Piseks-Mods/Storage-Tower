@@ -1,5 +1,6 @@
 package org.dpdns.pisekpiskovec.storagetower.screen.menu;
 
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -12,16 +13,18 @@ import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 
 public class StorageControllerMenu extends AbstractContainerMenu {
     private final StorageControllerBlockEntity blockEntity;
+    private final StorageDisplayContainer storageContainer;
     private static final int STORAGE_SLOTS = 24; // 8x3 grid, where would be 9th slot there will be scrollbar
 
     public StorageControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER.get(), id);
         this.blockEntity = (StorageControllerBlockEntity) entity;
+        this.storageContainer = new StorageDisplayContainer(blockEntity);
 
         // Storage slots
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 8; col++) {
-                this.addSlot(new StorageDisplaySlot(blockEntity, col + row * 8, 9 + col * 18, 19 + row * 18));
+                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18));
             }
         }
 
@@ -92,55 +95,38 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplaySlot extends Slot {
-        private final StorageControllerBlockEntity blockEntity;
-        private final int slotIndex;
+    private record StorageDisplayContainer(StorageControllerBlockEntity blockEntity) implements Container {
 
-        public StorageDisplaySlot(StorageControllerBlockEntity blockEntity, int index, int x, int y) {
-            super(null, index, x, y);
-            this.blockEntity = blockEntity;
-            this.slotIndex = index;
+        @Override
+        public int getContainerSize() {
+            return 24;
         }
 
         @Override
-        public boolean mayPlace(ItemStack pStack) {
-            return false; // Cant place items directly in display slots
+        public boolean isEmpty() {
+            TowerNetwork network = blockEntity.getTower();
+            return network == null || network.getAllItems().isEmpty();
         }
 
         @Override
-        public ItemStack getItem() {
+        public ItemStack getItem(int pSlot) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null) {
                 var items = network.getAllItems();
-                if (slotIndex < items.size()) {
-                    return items.get(slotIndex);
+                if (pSlot < items.size()) {
+                    return items.get(pSlot);
                 }
             }
             return ItemStack.EMPTY;
         }
 
         @Override
-        public void set(ItemStack pStack) {
-
-        }
-
-        @Override
-        public void setChanged() {
-
-        }
-
-        @Override
-        public int getMaxStackSize() {
-            return 64;
-        }
-
-        @Override
-        public ItemStack remove(int pAmount) {
+        public ItemStack removeItem(int pSlot, int pAmount) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null) {
                 var items = network.getAllItems();
-                if (slotIndex < items.size()) {
-                    ItemStack stack = items.get(slotIndex);
+                if (pSlot < items.size()) {
+                    ItemStack stack = items.get(pSlot);
                     return network.extractItem(stack, Math.min(pAmount, stack.getCount()), false);
                 }
             }
@@ -148,8 +134,39 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPickup(Player pPlayer) {
+        public ItemStack removeItemNoUpdate(int pSlot) {
+            return removeItem(pSlot, 64);
+        }
+
+        @Override
+        public void setItem(int pSlot, ItemStack pStack) {
+
+        }
+
+        @Override
+        public void setChanged() {
+            blockEntity.setChanged();
+        }
+
+        @Override
+        public boolean stillValid(Player pPlayer) {
             return true;
+        }
+
+        @Override
+        public void clearContent() {
+
+        }
+    }
+
+    private static class StorageDisplaySlot extends Slot {
+        public StorageDisplaySlot(Container container, int index, int x, int y) {
+            super(container, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack pStack) {
+            return false; // Cant place items directly in display slots
         }
     }
 }

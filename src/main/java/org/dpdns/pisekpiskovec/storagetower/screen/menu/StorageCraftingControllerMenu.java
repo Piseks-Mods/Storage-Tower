@@ -21,6 +21,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     private final ContainerLevelAccess access;
     private final Player player;
     private static final int STORAGE_SLOTS = 3; // 3 vertical slots
+    private final StorageDisplayContainer storageContainer;
 
     public StorageCraftingControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER_CRAFTING.get(), id);
@@ -29,10 +30,11 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         this.resultContainer = new ResultContainer();
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
         this.player = playerInv.player;
+        this.storageContainer = new StorageDisplayContainer(blockEntity);
 
         // Storage display slots
         for (int i = 0; i < 3; i++) {
-            this.addSlot(new StorageDisplaySlot(blockEntity, i, 9, 19 + i * 18));
+            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 19 + i * 18));
         }
 
         // Crafting result slot
@@ -176,55 +178,38 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplaySlot extends Slot {
-        private final StorageCraftingControllerBlockEntity blockEntity;
-        private final int slotIndex;
+    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
 
-        public StorageDisplaySlot(StorageCraftingControllerBlockEntity blockEntity, int index, int x, int y) {
-            super(null, index, x, y);
-            this.blockEntity = blockEntity;
-            this.slotIndex = index;
+        @Override
+        public int getContainerSize() {
+            return 3;
         }
 
         @Override
-        public boolean mayPlace(ItemStack pStack) {
-            return false; // Cant place items directly in display slots
+        public boolean isEmpty() {
+            TowerNetwork network = blockEntity.getTower();
+            return network == null || network.getAllItems().isEmpty();
         }
 
         @Override
-        public ItemStack getItem() {
+        public ItemStack getItem(int pSlot) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null) {
                 var items = network.getAllItems();
-                if (slotIndex < items.size()) {
-                    return items.get(slotIndex);
+                if (pSlot < items.size()) {
+                    return items.get(pSlot);
                 }
             }
             return ItemStack.EMPTY;
         }
 
         @Override
-        public void set(ItemStack pStack) {
-
-        }
-
-        @Override
-        public void setChanged() {
-
-        }
-
-        @Override
-        public int getMaxStackSize() {
-            return 64;
-        }
-
-        @Override
-        public ItemStack remove(int pAmount) {
+        public ItemStack removeItem(int pSlot, int pAmount) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null) {
                 var items = network.getAllItems();
-                if (slotIndex < items.size()) {
-                    ItemStack stack = items.get(slotIndex);
+                if (pSlot < items.size()) {
+                    ItemStack stack = items.get(pSlot);
                     return network.extractItem(stack, Math.min(pAmount, stack.getCount()), false);
                 }
             }
@@ -232,8 +217,39 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPickup(Player pPlayer) {
+        public ItemStack removeItemNoUpdate(int pSlot) {
+            return removeItem(pSlot, 64);
+        }
+
+        @Override
+        public void setItem(int pSlot, ItemStack pStack) {
+
+        }
+
+        @Override
+        public void setChanged() {
+            blockEntity.setChanged();
+        }
+
+        @Override
+        public boolean stillValid(Player pPlayer) {
             return true;
+        }
+
+        @Override
+        public void clearContent() {
+
+        }
+    }
+
+    private static class StorageDisplaySlot extends Slot {
+        public StorageDisplaySlot(Container container, int index, int x, int y) {
+            super(container, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack pStack) {
+            return false; // Cant place items directly in display slots
         }
     }
 }
