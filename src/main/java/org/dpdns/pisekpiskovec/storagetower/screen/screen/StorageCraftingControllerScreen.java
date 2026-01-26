@@ -1,7 +1,9 @@
 package org.dpdns.pisekpiskovec.storagetower.screen.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -17,6 +19,8 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
     private static final ResourceLocation TEXTURE = new ResourceLocation(StorageTower.MOD_ID, "textures/gui/storage_crafting_controller.png");
 
     private final StorageCraftingControllerBlockEntity blockEntity;
+    private int scrollOffset = 0;
+    private int maxScroll = 0;
 
     public StorageCraftingControllerScreen(StorageCraftingControllerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
@@ -27,28 +31,45 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
 
     @Override
     protected void renderBg(GuiGraphics pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
-        // Simple gray background
-        pGuiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF404040);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // Crafting grid area bg
-        pGuiGraphics.fill(leftPos + 29, topPos + 16, leftPos + 83, topPos + 70, 0xFF303030);
+        int x = leftPos;
+        int y = topPos;
 
-        // Crafting result area bg
-        pGuiGraphics.fill(leftPos + 123, topPos + 34, leftPos + 141, topPos + 52, 0xFF303030);
+        // Main background
+        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFF8B8B8B);
+
+        // Crafting grid area background
+        pGuiGraphics.fill(x + 29, y + 16, x + 83, y + 70, 0xFF373737);
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                int slotX = x + 30 + col * 18;
+                int slotY = y + 17 + row * 18;
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
+            }
+        }
+
+        // Crafting result area background
+        pGuiGraphics.fill(x + 123, y + 34, x + 141, y + 52, 0xFF373737);
+        pGuiGraphics.fill(x + 124, y + 35, x + 140, y + 51, 0xFF8B8B8B);
 
         // Storage display area background
-        pGuiGraphics.fill(leftPos + 8, topPos + 18, leftPos + 26, topPos + 78, 0xFF202020);
+        pGuiGraphics.fill(x + 8, y + 16, x + 26, y + 70, 0xFF373737);
+        for (int i = 0; i < 3; i++) {
+            int slotX = x + 9;
+            int slotY = y + 17 + i * 18;
+            pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
+        }
+
+        // Render storage items
+        renderStorageItems(pGuiGraphics);
     }
 
     @Override
     public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        //renderBackground(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
-        renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY);
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         renderTooltip(pGuiGraphics, pMouseX, pMouseY);
-
-        // Render storage items
-        renderStorageItems(pGuiGraphics, pMouseX, pMouseY);
     }
 
     @Override
@@ -57,7 +78,11 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
         pGuiGraphics.drawString(this.font, this.playerInventoryTitle, 8, this.imageHeight - 94, 0x404040, false);
     }
 
-    private void renderStorageItems(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY) {
+    @Override
+    protected void renderTooltip(GuiGraphics pGuiGraphics, int pX, int pY) {
+        super.renderTooltip(pGuiGraphics, pX, pY);
+
+        // Custom tooltip for storage items
         TowerNetwork network = blockEntity.getTower();
         if (network != null) {
             List<ItemStack> items = network.getAllItems();
@@ -65,15 +90,67 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
             int startX = leftPos + 9;
             int startY = topPos + 19;
 
-            for (int i = 0; i < Math.min(items.size(), 3); i++) /* Only 3 slots */ {
+            int startIndex = scrollOffset;
+            int endIndex = Math.min(startIndex + 3, items.size());
+
+            for (int i = startIndex; i < endIndex; i++) {
                 ItemStack stack = items.get(i);
                 if (!stack.isEmpty()) {
-                    int slotY = startY + i * 18;
+                    int displayIndex = i - startIndex;
+                    int slotY = startY + displayIndex * 18;
+
+                    if (pX >= startX && pX < startX + 16 && pY >= slotY && pY < slotY + 16) {
+                        pGuiGraphics.renderTooltip(this.font, stack, pX, pY);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void renderStorageItems(GuiGraphics pGuiGraphics) {
+        TowerNetwork network = blockEntity.getTower();
+        if (network != null) {
+            List<ItemStack> items = network.getAllItems();
+
+            maxScroll = Math.max(0, items.size() - 3); // Calculate max scroll
+
+            int startX = leftPos + 9;
+            int startY = topPos + 19;
+
+            int startIndex = scrollOffset;
+            int endIndex = Math.min(startIndex + 3, items.size());
+
+            for (int i = startIndex; i < endIndex; i++) {
+                ItemStack stack = items.get(i);
+                if (!stack.isEmpty()) {
+                    int displayIndex = i - startIndex;
+                    int slotY = startY + displayIndex * 18;
 
                     pGuiGraphics.renderItem(stack, startX, slotY);
                     pGuiGraphics.renderItemDecorations(this.font, stack, startX, slotY);
                 }
             }
         }
+    }
+
+    @Override
+    public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
+        // Only scroll when mouse is over storage display area
+        int startX = leftPos + 8;
+        int startY = topPos + 18;
+        int endX = startX + 18;
+        int endY = startY + 60;
+
+        if (pMouseX >= startX && pMouseX <= endX && pMouseY >= startY && pMouseY <= endY) {
+            if (pDelta > 0) {
+                scrollOffset = Math.max(0, scrollOffset - 1);
+                return true;
+            } else if (pDelta < 0) {
+                scrollOffset = Math.min(maxScroll, scrollOffset + 1);
+                return true;
+            }
+        }
+        return super.mouseScrolled(pMouseX, pMouseY, pDelta);
     }
 }
