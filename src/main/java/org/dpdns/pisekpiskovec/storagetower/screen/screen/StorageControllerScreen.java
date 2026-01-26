@@ -41,7 +41,7 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
         pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFF8B8B8B);
 
         // Storage display area background
-        pGuiGraphics.fill(x + 8, y + 18, x + 168, y + 78, 0xFF373737);
+        pGuiGraphics.fill(x + 8, y + 18, x + 168, y + 72, 0xFF373737);
 
         // Draw slot backgrounds for storage items
         int slotsPerRow = 8;
