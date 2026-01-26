@@ -1,5 +1,6 @@
 package org.dpdns.pisekpiskovec.storagetower.screen.menu;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +18,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     private final CraftingContainer craftingContainer;
     private final ResultContainer resultContainer;
     private final ContainerLevelAccess access;
+    private final Player player;
 
     public StorageCraftingControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER_CRAFTING.get(), id);
@@ -24,6 +26,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         this.craftingContainer = new TransientCraftingContainer(this, 3, 3);
         this.resultContainer = new ResultContainer();
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
+        this.player = playerInv.player;
 
         // Crafting result slot
         this.addSlot(new ResultSlot(playerInv.player, this.craftingContainer, this.resultContainer, 0, 124, 35));
@@ -51,7 +54,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     @Override
     public void slotsChanged(Container pContainer) {
         this.access.execute((level, pos) -> {
-            slotChangedCraftingGrid(this, level, null, this.craftingContainer, this.resultContainer);
+            slotChangedCraftingGrid(this, level, this.player, this.craftingContainer, this.resultContainer);
         });
     }
 
@@ -62,13 +65,14 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
             if (optional.isPresent()) {
                 CraftingRecipe recipe = optional.get();
-                if (resultContainer.setRecipeUsed(level, null, recipe)) {
+                if (resultContainer.setRecipeUsed(level, (ServerPlayer) player, recipe)) {
                     result = recipe.assemble(craftingContainer, level.registryAccess());
                 }
             }
 
             resultContainer.setItem(0, result);
             menu.setRemoteSlot(0, result);
+            menu.broadcastChanges();
         }
     }
 
@@ -77,7 +81,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(pIndex);
 
-        if (slot.hasItem()) {
+        if (slot != null && slot.hasItem()) {
             ItemStack slotStack = slot.getItem();
             itemStack = slotStack.copy();
 
@@ -92,6 +96,11 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                 }
 
                 slot.onQuickCraft(slotStack, itemStack);
+            } else if (pIndex >= 1 && pIndex < 10) {
+                // From crafting grid to player inventory
+                if (!this.moveItemStackTo(slotStack, 10, 46, false)) {
+                    return ItemStack.EMPTY;
+                }
             } else if (pIndex >= 10 && pIndex < 46) {
                 // From player inventory to crafting grid
                 if (!this.moveItemStackTo(slotStack, 1, 10, false)) {
@@ -103,8 +112,6 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                         return ItemStack.EMPTY;
                     }
                 }
-            } else if (!this.moveItemStackTo(slotStack, 10, 46, false)) {
-                return ItemStack.EMPTY;
             }
 
             if (slotStack.isEmpty()) {
