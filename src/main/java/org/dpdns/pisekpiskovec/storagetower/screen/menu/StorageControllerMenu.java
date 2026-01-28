@@ -55,6 +55,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
                 if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS, STORAGE_SLOTS + 36, true)) {
                     return ItemStack.EMPTY;
                 }
+                slot.onQuickCraft(slotStack, itemStack);
             } else {
                 // From player inventory to storage
                 TowerNetwork network = blockEntity.getTower();
@@ -145,7 +146,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void setItem(int pSlot, ItemStack pStack) {
-
+            // Noop
         }
 
         @Override
@@ -160,7 +161,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void clearContent() {
-
+            // Noop
         }
     }
 
@@ -172,6 +173,24 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         @Override
         public boolean mayPlace(ItemStack pStack) {
             return false; // Can't place items directly in display slots
+        }
+
+        @Override
+        public boolean mayPickup(Player pPlayer) {
+            return true;
+        }
+
+        @Override
+        public ItemStack remove(int pAmount) {
+            ItemStack result = this.container.removeItem(this.index, pAmount);
+            this.setChanged();
+            return result;
+        }
+
+        @Override
+        public void onTake(Player pPlayer, ItemStack pStack) {
+            this.setChanged();
+            super.onTake(pPlayer, pStack);
         }
     }
 }

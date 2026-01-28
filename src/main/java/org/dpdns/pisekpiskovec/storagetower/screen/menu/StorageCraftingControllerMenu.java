@@ -99,6 +99,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                 if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 10, STORAGE_SLOTS + 46, true)) {
                     return ItemStack.EMPTY;
                 }
+                slot.onQuickCraft(slotStack, itemStack);
             } else if (pIndex == STORAGE_SLOTS) {
                 // Result slot - craft the item
                 this.access.execute((level, pos) -> {
@@ -228,7 +229,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void setItem(int pSlot, ItemStack pStack) {
-
+            // Noop
         }
 
         @Override
@@ -243,7 +244,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void clearContent() {
-
+            // Noop
         }
     }
 
@@ -255,6 +256,24 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         @Override
         public boolean mayPlace(ItemStack pStack) {
             return false; // Can't place items directly in display slots
+        }
+
+        @Override
+        public boolean mayPickup(Player pPlayer) {
+            return true;
+        }
+
+        @Override
+        public ItemStack remove(int pAmount) {
+            ItemStack result = this.container.removeItem(this.index, pAmount);
+            this.setChanged();
+            return result;
+        }
+
+        @Override
+        public void onTake(Player pPlayer, ItemStack pStack) {
+            this.setChanged();
+            super.onTake(pPlayer, pStack);
         }
     }
 }
