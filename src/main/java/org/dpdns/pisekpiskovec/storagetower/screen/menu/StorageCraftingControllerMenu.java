@@ -178,7 +178,12 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
+    private static class StorageDisplayContainer implements Container {
+        private final StorageCraftingControllerBlockEntity blockEntity;
+
+        public StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) {
+            this.blockEntity = blockEntity;
+        }
 
         @Override
         public int getContainerSize() {
@@ -249,7 +254,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack pStack) {
-            return false; // Cant place items directly in display slots
+            return false; // Can't place items directly in display slots
         }
     }
 }

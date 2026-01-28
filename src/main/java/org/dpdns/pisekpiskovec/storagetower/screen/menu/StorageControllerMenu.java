@@ -14,7 +14,7 @@ import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 public class StorageControllerMenu extends AbstractContainerMenu {
     private final StorageControllerBlockEntity blockEntity;
     private final StorageDisplayContainer storageContainer;
-    private static final int STORAGE_SLOTS = 24; // 8x3 grid, where would be 9th slot there will be scrollbar
+    private static final int STORAGE_SLOTS = 24; // 8x3 grid, where would be 9th column there will be scrollbar
 
     public StorageControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER.get(), id);
@@ -95,7 +95,12 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private record StorageDisplayContainer(StorageControllerBlockEntity blockEntity) implements Container {
+    private static class StorageDisplayContainer implements Container {
+        private final StorageControllerBlockEntity blockEntity;
+
+        public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
+            this.blockEntity = blockEntity;
+        }
 
         @Override
         public int getContainerSize() {
@@ -166,7 +171,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack pStack) {
-            return false; // Cant place items directly in display slots
+            return false; // Can't place items directly in display slots
         }
     }
 }
