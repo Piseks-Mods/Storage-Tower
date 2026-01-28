@@ -1,6 +1,7 @@
 package org.dpdns.pisekpiskovec.storagetower.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -39,7 +40,11 @@ public class StorageControllerBlock extends BaseEntityBlock {
         if (!pLevel.isClientSide && pPlayer instanceof ServerPlayer serverPlayer) {
             BlockEntity be = pLevel.getBlockEntity(pPos);
             if (be instanceof StorageControllerBlockEntity controller) {
-                NetworkHooks.openScreen(serverPlayer, controller, pPos);
+                if (controller.getTower() != null && controller.getTower().getTotalSlots() > 0) {
+                    NetworkHooks.openScreen(serverPlayer, controller, pPos);
+                } else {
+                    ((ServerPlayer) pPlayer).sendSystemMessage(Component.translatableWithFallback("container.storagetower.invalid_tower", "Invalid tower!"), true);
+                }
             }
         }
         return InteractionResult.sidedSuccess(pLevel.isClientSide);
