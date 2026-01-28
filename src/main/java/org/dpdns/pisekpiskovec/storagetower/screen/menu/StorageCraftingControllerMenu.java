@@ -34,7 +34,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         // Storage display slots
         for (int i = 0; i < 3; i++) {
-            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 19 + i * 18));
+            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 17 + i * 18));
         }
 
         // Crafting result slot
