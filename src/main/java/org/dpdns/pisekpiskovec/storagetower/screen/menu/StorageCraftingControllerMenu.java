@@ -96,6 +96,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
             if (pIndex < STORAGE_SLOTS) {
                 // From storage display to player inventory
+                // This is a ghost slot, so we need to extract from the network manually
                 TowerNetwork network = blockEntity.getTower();
                 if (network != null && !slotStack.isEmpty()) {
                     // Extract the item from the network
@@ -106,6 +107,8 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                             pPlayer.drop(extracted, false); // If couldn't add, drop it
                         }
                     }
+                    
+                    this.broadcastChanges();
                 }
             } else if (pIndex == STORAGE_SLOTS) {
                 // Result slot - craft the item
@@ -137,6 +140,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                         } else {
                             slot.setChanged();
                         }
+                        this.broadcastChanges();
                         return itemStack;
                     }
 
@@ -167,6 +171,21 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         }
 
         return itemStack;
+    }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+
+        // Update all ghost slots with current network data
+        TowerNetwork network = blockEntity.getTower();
+        if (network != null) {
+            var items = network.getAllItems();
+            for (int i = 0; i < STORAGE_SLOTS; i++) {
+                ItemStack newStack = i < items.size() ? items.get(i) : ItemStack.EMPTY;
+                this.setRemoteSlot(i, newStack);
+            }
+        }
     }
 
     @Override

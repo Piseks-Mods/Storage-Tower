@@ -63,6 +63,8 @@ public class StorageControllerMenu extends AbstractContainerMenu {
                             pPlayer.drop(extracted, false); // If couldn't add, drop it
                         }
                     }
+
+                    this.broadcastChanges();
                 }
                 return itemStack;
             } else {
@@ -76,6 +78,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
                     } else {
                         slot.setChanged();
                     }
+                    this.broadcastChanges();
                     return itemStack;
                 }
             }
@@ -97,6 +100,21 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     }
 
     @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+
+        // Update all ghost slots with current network data
+        TowerNetwork network = blockEntity.getTower();
+        if (network != null) {
+            var items = network.getAllItems();
+            for (int i = 0; i < STORAGE_SLOTS; i++) {
+                ItemStack newStack = i < items.size() ? items.get(i) : ItemStack.EMPTY;
+                this.setRemoteSlot(i, newStack);
+            }
+        }
+    }
+
+    @Override
     public boolean stillValid(Player pPlayer) {
         return blockEntity != null && !blockEntity.isRemoved() && pPlayer.distanceToSqr(blockEntity.getBlockPos().getX() + 0.5, blockEntity.getBlockPos().getY() + 0.5, blockEntity.getBlockPos().getZ() + 0.5) <= 64;
     }
@@ -105,7 +123,12 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private record StorageDisplayContainer(StorageControllerBlockEntity blockEntity) implements Container {
+    private static class StorageDisplayContainer implements Container {
+        private final StorageControllerBlockEntity blockEntity;
+
+        public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
+            this.blockEntity = blockEntity;
+        }
 
         @Override
         public int getContainerSize() {
