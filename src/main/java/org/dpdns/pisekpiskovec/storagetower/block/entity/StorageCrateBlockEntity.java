@@ -45,7 +45,7 @@ public class StorageCrateBlockEntity extends BlockEntity {
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
         ItemStack remaining = stack.copy();
 
-        // First pass: try to merge with exising stacks
+        // First pass: try to merge with existing stacks
         for (int i = 0; i < inventory.getSlots(); i++) {
             ItemStack slotStack = inventory.getStackInSlot(i);
             if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, remaining)) {
@@ -87,18 +87,23 @@ public class StorageCrateBlockEntity extends BlockEntity {
             ItemStack slotStack = inventory.getStackInSlot(i);
             if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, filter)) {
                 int toExtract = Math.min(remaining, slotStack.getCount());
-                if (!simulate) {
-                    slotStack.shrink(toExtract);
-                    if (slotStack.isEmpty()) {
-                        inventory.setStackInSlot(i, ItemStack.EMPTY);
-                    }
-                }
+
                 if (result.isEmpty()) {
                     result = slotStack.copy();
                     result.setCount(toExtract);
                 } else {
                     result.grow(toExtract);
                 }
+
+                if (!simulate) {
+                    slotStack.shrink(toExtract);
+                    if (slotStack.isEmpty()) {
+                        inventory.setStackInSlot(i, ItemStack.EMPTY);
+                    } else {
+                        inventory.setStackInSlot(i, slotStack);
+                    }
+                }
+
                 remaining -= toExtract;
                 if (remaining <= 0) break;
             }

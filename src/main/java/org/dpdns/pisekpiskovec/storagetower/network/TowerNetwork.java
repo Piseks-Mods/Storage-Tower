@@ -51,10 +51,7 @@ public class TowerNetwork {
     private boolean isTowerBlock(BlockPos pos) {
         if (!level.isLoaded(pos)) return false;
         var state = level.getBlockState(pos);
-        return state.is(ModBlocks.STORAGE_CRATE.get()) ||
-                state.is(ModBlocks.STORAGE_CONTROLLER.get()) ||
-                state.is(ModBlocks.STORAGE_CONTROLLER_CRAFTING.get()) ||
-                state.is(ModBlocks.STORAGE_INTERFACE.get());
+        return state.is(ModBlocks.STORAGE_CRATE.get()) || state.is(ModBlocks.STORAGE_CONTROLLER.get()) || state.is(ModBlocks.STORAGE_CONTROLLER_CRAFTING.get()) || state.is(ModBlocks.STORAGE_INTERFACE.get());
     }
 
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
@@ -68,6 +65,8 @@ public class TowerNetwork {
     }
 
     public ItemStack extractItem(ItemStack filter, int amount, boolean simulate) {
+        System.out.println("EXTRACT REQUEST: " + filter + " x" + amount + "; simulation=" + simulate);
+
         if (!valid) return ItemStack.EMPTY;
 
         int remaining = amount;
@@ -85,6 +84,8 @@ public class TowerNetwork {
                 if (remaining <= 0) break;
             }
         }
+
+        System.out.println("EXTRACT RESULT: " + result + " x" + result.getCount());
         return result;
     }
 
