@@ -133,7 +133,8 @@ public class StorageControllerMenu extends AbstractContainerMenu {
                 var items = network.getAllItems();
                 if (pSlot < items.size()) {
                     ItemStack stack = items.get(pSlot);
-                    return network.extractItem(stack, Math.min(pAmount, stack.getCount()), false);
+                    ItemStack filter = stack.copy();
+                    return network.extractItem(filter, Math.min(pAmount, stack.getCount()), false);
                 }
             }
             return ItemStack.EMPTY;
@@ -182,15 +183,42 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public ItemStack remove(int pAmount) {
-            ItemStack result = this.container.removeItem(this.index, pAmount);
-            this.setChanged();
-            return result;
+            // Get the item at this slot position
+            ItemStack displayStack = getItem();
+            if(displayStack.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+
+            // Extract from the network
+            ItemStack extracted = this.container.removeItem(this.index, pAmount);
+
+            // Mark container as changed to trigger client sync
+            if(!extracted.isEmpty()) {
+                this.setChanged();
+            }
+
+            return extracted;
         }
 
         @Override
         public void onTake(Player pPlayer, ItemStack pStack) {
             this.setChanged();
             super.onTake(pPlayer, pStack);
+        }
+
+        @Override
+        public void set(ItemStack pStack) {
+            // Noop
+        }
+
+        @Override
+        public ItemStack safeInsert(ItemStack pStack) {
+            return pStack; // Ghosts can't accept items
+        }
+
+        @Override
+        public ItemStack safeInsert(ItemStack pStack, int pIncrement) {
+            return pStack; // Ghosts can't accept items
         }
     }
 }
