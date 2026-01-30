@@ -51,11 +51,20 @@ public class StorageControllerMenu extends AbstractContainerMenu {
             itemStack = slotStack.copy();
 
             if (pIndex < STORAGE_SLOTS) {
-                // From storage to player inventory
-                if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS, STORAGE_SLOTS + 36, true)) {
-                    return ItemStack.EMPTY;
+                // From storage display to player inventory
+                // This is a ghost slot, so we need to extract from the network manually
+                TowerNetwork network = blockEntity.getTower();
+                if (network != null && !slotStack.isEmpty()) {
+                    // Extract the item from the network
+                    ItemStack extracted = network.extractItem(slotStack, slotStack.getCount(), false);
+
+                    if (!extracted.isEmpty()) {
+                        if (!pPlayer.getInventory().add(extracted)) /* Try to add to player inventory */ {
+                            pPlayer.drop(extracted, false); // If couldn't add, drop it
+                        }
+                    }
                 }
-                slot.onQuickCraft(slotStack, itemStack);
+                return itemStack;
             } else {
                 // From player inventory to storage
                 TowerNetwork network = blockEntity.getTower();
@@ -96,12 +105,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplayContainer implements Container {
-        private final StorageControllerBlockEntity blockEntity;
-
-        public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
-            this.blockEntity = blockEntity;
-        }
+    private record StorageDisplayContainer(StorageControllerBlockEntity blockEntity) implements Container {
 
         @Override
         public int getContainerSize() {
@@ -183,17 +187,30 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public ItemStack remove(int pAmount) {
-            // Get the item at this slot position
+            // Only process on server side to avoid double extraction
+            if (this.container instanceof StorageDisplayContainer displayContainer) {
+                if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
+                    // On client, just return what we think we are removing
+                    ItemStack displayStack = getItem();
+                    if (!displayStack.isEmpty()) {
+                        ItemStack result = displayStack.copy();
+                        result.setCount(Math.min(pAmount, displayStack.getCount()));
+                        return result;
+                    }
+                    return ItemStack.EMPTY;
+                }
+            }
+
+            // Server side - do the actual extraction
             ItemStack displayStack = getItem();
-            if(displayStack.isEmpty()) {
+            if (displayStack.isEmpty()) {
                 return ItemStack.EMPTY;
             }
 
-            // Extract from the network
-            ItemStack extracted = this.container.removeItem(this.index, pAmount);
+            ItemStack extracted = this.container.removeItem(this.index, pAmount); // Extract from the network
 
             // Mark container as changed to trigger client sync
-            if(!extracted.isEmpty()) {
+            if (!extracted.isEmpty()) {
                 this.setChanged();
             }
 
