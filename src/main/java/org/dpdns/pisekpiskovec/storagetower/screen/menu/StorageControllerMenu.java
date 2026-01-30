@@ -24,7 +24,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         // Storage slots
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 8; col++) {
-                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18));
+                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18, this));
             }
         }
 
@@ -194,8 +194,11 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     }
 
     private static class StorageDisplaySlot extends Slot {
-        public StorageDisplaySlot(Container container, int index, int x, int y) {
+        private final AbstractContainerMenu menu;
+
+        public StorageDisplaySlot(Container container, int index, int x, int y, AbstractContainerMenu menu) {
             super(container, index, x, y);
+            this.menu = menu;
         }
 
         @Override
@@ -243,6 +246,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         @Override
         public void onTake(Player pPlayer, ItemStack pStack) {
             this.setChanged();
+            this.menu.broadcastChanges();
             super.onTake(pPlayer, pStack);
         }
 

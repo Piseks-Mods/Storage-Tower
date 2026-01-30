@@ -34,7 +34,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         // Storage display slots
         for (int i = 0; i < 3; i++) {
-            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 17 + i * 18));
+            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 17 + i * 18, this));
         }
 
         // Crafting result slot
@@ -107,7 +107,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                             pPlayer.drop(extracted, false); // If couldn't add, drop it
                         }
                     }
-                    
+
                     this.broadcastChanges();
                 }
             } else if (pIndex == STORAGE_SLOTS) {
@@ -276,8 +276,11 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     }
 
     private static class StorageDisplaySlot extends Slot {
-        public StorageDisplaySlot(Container container, int index, int x, int y) {
+        private final AbstractContainerMenu menu;
+
+        public StorageDisplaySlot(Container container, int index, int x, int y, AbstractContainerMenu menu) {
             super(container, index, x, y);
+            this.menu = menu;
         }
 
         @Override
@@ -325,6 +328,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         @Override
         public void onTake(Player pPlayer, ItemStack pStack) {
             this.setChanged();
+            this.menu.broadcastChanges();
             super.onTake(pPlayer, pStack);
         }
 
