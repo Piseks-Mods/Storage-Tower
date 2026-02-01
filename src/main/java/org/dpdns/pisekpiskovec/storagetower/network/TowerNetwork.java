@@ -23,6 +23,7 @@ public class TowerNetwork {
     }
 
     public void scanTower() {
+        System.out.println("SCAN REQUEST");
         crates.clear();
 
         // Scan upwards
@@ -46,6 +47,8 @@ public class TowerNetwork {
             }
             pos = pos.below();
         }
+
+        System.out.println("SCAN FINISHED");
     }
 
     private boolean isTowerBlock(BlockPos pos) {
@@ -55,12 +58,14 @@ public class TowerNetwork {
     }
 
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
+        System.out.println("INSERT REQUEST: " + stack + " x" + stack.getCount() + "; simulation=" + simulate);
         if (!valid) return stack;
 
         for (StorageCrateBlockEntity crate : crates) {
             stack = crate.insertItem(stack, simulate);
             if (stack.isEmpty()) break;
         }
+        System.out.println("INSERT RESULT: " + stack + " x" + stack.getCount());
         return stack;
     }
 

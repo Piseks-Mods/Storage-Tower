@@ -43,6 +43,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
+        System.out.println("REQUEST BELOW MADE USING: shift+click");
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(pIndex);
 
@@ -213,6 +214,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public ItemStack remove(int pAmount) {
+            System.out.println("REQUEST BELOW MADE USING: dragging item into/outto slot");
             // Only process on server side to avoid double extraction
             if (this.container instanceof StorageDisplayContainer displayContainer) {
                 if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
