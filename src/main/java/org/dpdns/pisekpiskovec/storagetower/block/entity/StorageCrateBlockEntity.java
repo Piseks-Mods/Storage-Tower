@@ -43,6 +43,10 @@ public class StorageCrateBlockEntity extends BlockEntity {
     }
 
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
         ItemStack remaining = stack.copy();
 
         // First pass: try to merge with existing stacks
@@ -52,12 +56,16 @@ public class StorageCrateBlockEntity extends BlockEntity {
                 int space = slotStack.getMaxStackSize() - slotStack.getCount();
                 if (space > 0) {
                     int toInsert = Math.min(space, remaining.getCount());
+
                     if (!simulate) {
                         slotStack.grow(toInsert);
                         inventory.setStackInSlot(i, slotStack);
                     }
+
                     remaining.shrink(toInsert);
-                    if (remaining.isEmpty()) return ItemStack.EMPTY;
+                    if (remaining.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
                 }
             }
         }
@@ -66,13 +74,17 @@ public class StorageCrateBlockEntity extends BlockEntity {
         for (int i = 0; i < inventory.getSlots(); i++) {
             if (inventory.getStackInSlot(i).isEmpty()) {
                 int toInsert = Math.min(remaining.getMaxStackSize(), remaining.getCount());
+
                 if (!simulate) {
                     ItemStack insertStack = remaining.copy();
                     insertStack.setCount(toInsert);
                     inventory.setStackInSlot(i, insertStack);
                 }
+
                 remaining.shrink(toInsert);
-                if (remaining.isEmpty()) return ItemStack.EMPTY;
+                if (remaining.isEmpty()) {
+                    return ItemStack.EMPTY;
+                }
             }
         }
 

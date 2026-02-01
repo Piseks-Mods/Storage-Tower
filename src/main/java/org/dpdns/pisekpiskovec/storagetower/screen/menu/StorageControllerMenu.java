@@ -4,6 +4,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -24,7 +25,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         // Storage slots
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 8; col++) {
-                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18, this));
+                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18));
             }
         }
 
@@ -42,8 +43,41 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     }
 
     @Override
+    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
+        // Intercept clicks on ghost slots to prevent certain operations
+        if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
+            // Ghost slots
+            if (pClickType == ClickType.PICKUP ||pClickType == ClickType.PICKUP_ALL) {
+                super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow normal pickup
+                this.broadcastChanges(); // Force update after pickup
+                return;
+            } else if (pClickType == ClickType.QUICK_MOVE) {
+                super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow shift-click
+                this.broadcastChanges(); // Force update after pickup
+                return;
+            } else {
+                return; // Block all other click types on ghost slots (SWAP, CLONE, THROW, etc.)
+            }
+        }
+
+        // For non-ghost slots, handle normally
+        super.clicked(pSlotId, pButton, pClickType, pPlayer);
+
+        // If it was a shift-click INTO sotrage, update display
+        if (pClickType == ClickType.QUICK_MOVE && pSlotId >= STORAGE_SLOTS) {
+            this.broadcastChanges();
+        }
+    }
+
+    @Override
     public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
         System.out.println("REQUEST BELOW MADE USING: shift+click");
+
+        // Server-side only check
+        if (pPlayer.level().isClientSide) {
+            return ItemStack.EMPTY;
+        }
+
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(pIndex);
 
@@ -195,11 +229,8 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     }
 
     private static class StorageDisplaySlot extends Slot {
-        private final AbstractContainerMenu menu;
-
-        public StorageDisplaySlot(Container container, int index, int x, int y, AbstractContainerMenu menu) {
+        public StorageDisplaySlot(Container container, int index, int x, int y) {
             super(container, index, x, y);
-            this.menu = menu;
         }
 
         @Override
@@ -248,7 +279,6 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         @Override
         public void onTake(Player pPlayer, ItemStack pStack) {
             this.setChanged();
-            this.menu.broadcastChanges();
             super.onTake(pPlayer, pStack);
         }
 
