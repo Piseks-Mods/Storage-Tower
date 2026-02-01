@@ -115,21 +115,29 @@ public class StorageControllerMenu extends AbstractContainerMenu {
             return;
         }
 
-        // Only update on server size
+        // Only update on server side
         if (!blockEntity.getLevel().isClientSide) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null && network.isValid()) {
                 var items = network.getAllItems();
+                System.out.println("DEBUG: Broadcasting " + items.size() + " item types");
+                for (int i = 0; i < Math.min(3, items.size()); i++) {
+                    System.out.println("    Item " + i + ": " + items.get(i));
+                }
+
                 for (int i = 0; i < STORAGE_SLOTS; i++) {
-                    ItemStack newStack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
-                    this.setRemoteSlot(i, newStack);
+                    ItemStack stack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
+                    this.setRemoteSlot(i, stack);
                 }
             } else {
+                System.out.println("DEBUG: Network is null or invalid");
                 // Clear all slots if network is invalid
                 for (int i = 0; i < STORAGE_SLOTS; i++) {
                     this.setRemoteSlot(i, ItemStack.EMPTY);
                 }
             }
+        } else {
+            System.out.println("DEBUG: Client side, not broadcasting");
         }
     }
 
