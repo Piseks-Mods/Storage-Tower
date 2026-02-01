@@ -47,13 +47,11 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         // Intercept clicks on ghost slots to prevent certain operations
         if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
             // Ghost slots
-            if (pClickType == ClickType.PICKUP ||pClickType == ClickType.PICKUP_ALL) {
+            if (pClickType == ClickType.PICKUP || pClickType == ClickType.PICKUP_ALL) {
                 super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow normal pickup
-                this.broadcastChanges(); // Force update after pickup
                 return;
             } else if (pClickType == ClickType.QUICK_MOVE) {
                 super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow shift-click
-                this.broadcastChanges(); // Force update after pickup
                 return;
             } else {
                 return; // Block all other click types on ghost slots (SWAP, CLONE, THROW, etc.)
@@ -62,11 +60,6 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         // For non-ghost slots, handle normally
         super.clicked(pSlotId, pButton, pClickType, pPlayer);
-
-        // If it was a shift-click INTO sotrage, update display
-        if (pClickType == ClickType.QUICK_MOVE && pSlotId >= STORAGE_SLOTS) {
-            this.broadcastChanges();
-        }
     }
 
     @Override
@@ -78,73 +71,64 @@ public class StorageControllerMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
 
-        ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(pIndex);
-
-        if (slot != null && slot.hasItem()) {
-            ItemStack slotStack = slot.getItem();
-            itemStack = slotStack.copy();
-
-            if (pIndex < STORAGE_SLOTS) {
-                // From storage display to player inventory
-                // This is a ghost slot, so we need to extract from the network manually
-                TowerNetwork network = blockEntity.getTower();
-                if (network != null && !slotStack.isEmpty()) {
-                    // Extract the item from the network
-                    ItemStack extracted = network.extractItem(slotStack, slotStack.getCount(), false);
-
-                    if (!extracted.isEmpty()) {
-                        if (!pPlayer.getInventory().add(extracted)) /* Try to add to player inventory */ {
-                            pPlayer.drop(extracted, false); // If couldn't add, drop it
-                        }
-                    }
-
-                    this.broadcastChanges();
-                }
-                return itemStack;
-            } else {
-                // From player inventory to storage
-                TowerNetwork network = blockEntity.getTower();
-                if (network != null) {
-                    ItemStack remaining = network.insertItem(slotStack, false);
-                    slotStack.setCount(remaining.getCount());
-                    if (remaining.isEmpty()) {
-                        slot.set(ItemStack.EMPTY);
-                    } else {
-                        slot.setChanged();
-                    }
-                    this.broadcastChanges();
-                    return itemStack;
-                }
-            }
-
-            if (slotStack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
-
-            if (slotStack.getCount() == itemStack.getCount()) {
-                return ItemStack.EMPTY;
-            }
-
-            slot.onTake(pPlayer, slotStack);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
         }
 
-        return itemStack;
+        ItemStack slotStack = slot.getItem();
+        ItemStack originalStack = slotStack.copy();
+
+        if (pIndex < STORAGE_SLOTS) {
+            // From storage to player
+            TowerNetwork network = blockEntity.getTower();
+            if (network != null && !slotStack.isEmpty()) {
+                ItemStack extracted = network.extractItem(slotStack, slotStack.getCount(), false);
+                if (!extracted.isEmpty()) {
+                    if (!pPlayer.getInventory().add(extracted)) /* Try to add to player inventory */ {
+                        pPlayer.drop(extracted, false); // If couldn't add, drop it
+                    }
+                }
+            }
+        } else {
+            // From player to storage
+            TowerNetwork network = blockEntity.getTower();
+            if (network != null) {
+                ItemStack remaining = network.insertItem(slotStack, false);
+                slotStack.setCount(remaining.getCount());
+                if (remaining.isEmpty()) {
+                    slot.set(ItemStack.EMPTY);
+                } else {
+                    slot.setChanged();
+                }
+            }
+        }
+
+        return originalStack;
     }
 
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        // Update all ghost slots with current network data
-        TowerNetwork network = blockEntity.getTower();
-        if (network != null) {
-            var items = network.getAllItems();
-            for (int i = 0; i < STORAGE_SLOTS; i++) {
-                ItemStack newStack = i < items.size() ? items.get(i) : ItemStack.EMPTY;
-                this.setRemoteSlot(i, newStack);
+        if (blockEntity == null || blockEntity.getLevel() == null) {
+            return;
+        }
+
+        // Only update on server size
+        if (!blockEntity.getLevel().isClientSide) {
+            TowerNetwork network = blockEntity.getTower();
+            if (network != null && network.isValid()) {
+                var items = network.getAllItems();
+                for (int i = 0; i < STORAGE_SLOTS; i++) {
+                    ItemStack newStack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
+                    this.setRemoteSlot(i, newStack);
+                }
+            } else {
+                // Clear all slots if network is invalid
+                for (int i = 0; i < STORAGE_SLOTS; i++) {
+                    this.setRemoteSlot(i, ItemStack.EMPTY);
+                }
             }
         }
     }
@@ -164,6 +148,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
             this.blockEntity = blockEntity;
         }
+
 
         @Override
         public int getContainerSize() {
@@ -246,9 +231,11 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         @Override
         public ItemStack remove(int pAmount) {
             System.out.println("REQUEST BELOW MADE USING: dragging item into/outto slot");
+
             // Only process on server side to avoid double extraction
             if (this.container instanceof StorageDisplayContainer displayContainer) {
-                if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
+                if (displayContainer.blockEntity.getLevel() != null &&
+                    displayContainer.blockEntity.getLevel().isClientSide) {
                     // On client, just return what we think we are removing
                     ItemStack displayStack = getItem();
                     if (!displayStack.isEmpty()) {
@@ -266,14 +253,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            ItemStack extracted = this.container.removeItem(this.index, pAmount); // Extract from the network
-
-            // Mark container as changed to trigger client sync
-            if (!extracted.isEmpty()) {
-                this.setChanged();
-            }
-
-            return extracted;
+            return this.container.removeItem(this.index, pAmount);
         }
 
         @Override

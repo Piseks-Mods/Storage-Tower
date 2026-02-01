@@ -59,20 +59,22 @@ public class TowerNetwork {
 
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
         System.out.println("INSERT REQUEST: " + stack + " x" + stack.getCount() + "; simulation=" + simulate);
-        if (!valid) return stack;
+        if (!valid || stack.isEmpty()) return stack;
 
+        ItemStack remaining = stack.copy();
         for (StorageCrateBlockEntity crate : crates) {
-            stack = crate.insertItem(stack, simulate);
-            if (stack.isEmpty()) break;
+            remaining = crate.insertItem(stack, simulate);
+            if (remaining.isEmpty()) break;
         }
-        System.out.println("INSERT RESULT: " + stack + " x" + stack.getCount());
-        return stack;
+        System.out.println("INSERT RESULT: " + remaining + " x" + remaining.getCount());
+        return remaining;
     }
 
     public ItemStack extractItem(ItemStack filter, int amount, boolean simulate) {
         System.out.println("EXTRACT REQUEST: " + filter + " x" + amount + "; simulation=" + simulate);
 
-        if (!valid) return ItemStack.EMPTY;
+        if (!valid || filter.isEmpty() ||amount <= 0)
+            return ItemStack.EMPTY;
 
         int remaining = amount;
         ItemStack result = ItemStack.EMPTY;
