@@ -6,21 +6,30 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 
+import java.util.List;
+
 public class StorageControllerMenu extends AbstractContainerMenu {
     private final StorageControllerBlockEntity blockEntity;
     private final StorageDisplayContainer storageContainer;
     private static final int STORAGE_SLOTS = 24; // 8x3 grid, where would be 9th column there will be scrollbar
+    private final ItemStack[] lastSentSlots = new ItemStack[STORAGE_SLOTS];
 
     public StorageControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER.get(), id);
         this.blockEntity = (StorageControllerBlockEntity) entity;
         this.storageContainer = new StorageDisplayContainer(blockEntity);
+
+        // Initialize last sent slots
+        for (int i = 0; i < lastSentSlots.length; i++) {
+            lastSentSlots[i] = ItemStack.EMPTY;
+        }
 
         // Storage slots
         for (int row = 0; row < 3; row++) {
@@ -64,8 +73,6 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
-        System.out.println("REQUEST BELOW MADE USING: shift+click");
-
         // Server-side only check
         if (pPlayer.level().isClientSide) {
             return ItemStack.EMPTY;
@@ -119,25 +126,31 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         if (!blockEntity.getLevel().isClientSide) {
             TowerNetwork network = blockEntity.getTower();
             if (network != null && network.isValid()) {
-                var items = network.getAllItems();
-                System.out.println("DEBUG: Broadcasting " + items.size() + " item types");
-                for (int i = 0; i < Math.min(3, items.size()); i++) {
-                    System.out.println("    Item " + i + ": " + items.get(i));
-                }
+                List<ItemStack> items = network.getAllItems();
 
+                storageContainer.updateCache(items); // Update the container's cache
+
+                // Check each slot and send if changed
                 for (int i = 0; i < STORAGE_SLOTS; i++) {
-                    ItemStack stack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
-                    this.setRemoteSlot(i, stack);
+                    ItemStack currentStack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
+                    ItemStack lastStack = lastSentSlots[i];
+
+                    // Check if the stack has changed
+                    if (!ItemStack.matches(currentStack, lastStack)) {
+                        this.setRemoteSlot(i, currentStack);
+                        lastSentSlots[i] = currentStack.copy();
+                    }
                 }
             } else {
-                System.out.println("DEBUG: Network is null or invalid");
-                // Clear all slots if network is invalid
+                // Clear all slots if network invalid
+                storageContainer.clearCache(); // Clear cache
                 for (int i = 0; i < STORAGE_SLOTS; i++) {
-                    this.setRemoteSlot(i, ItemStack.EMPTY);
+                    if (!lastSentSlots[i].isEmpty()) {
+                        this.setRemoteSlot(i, ItemStack.EMPTY);
+                        lastSentSlots[i] = ItemStack.EMPTY;
+                    }
                 }
             }
-        } else {
-            System.out.println("DEBUG: Client side, not broadcasting");
         }
     }
 
@@ -152,31 +165,51 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
     private static class StorageDisplayContainer implements Container {
         private final StorageControllerBlockEntity blockEntity;
+        private final ItemStack[] cachedItems = new ItemStack[STORAGE_SLOTS];
 
         public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
             this.blockEntity = blockEntity;
+            // Initialize cache
+            for (int i = 0; i < cachedItems.length; i++) {
+                cachedItems[i] = ItemStack.EMPTY;
+            }
         }
 
+        public void updateCache(List<ItemStack> items) {
+            for (int i = 0; i < cachedItems.length; i++) {
+                if (i < items.size()) {
+                    cachedItems[i] = items.get(i).copy();
+                } else {
+                    cachedItems[i] = ItemStack.EMPTY;
+                }
+            }
+        }
+
+        public void clearCache() {
+            for (int i = 0; i < cachedItems.length; i++) {
+                cachedItems[i] = ItemStack.EMPTY;
+            }
+        }
 
         @Override
         public int getContainerSize() {
+            //return STORAGE_SLOTS;
             return 24;
         }
 
         @Override
         public boolean isEmpty() {
-            TowerNetwork network = blockEntity.getTower();
-            return network == null || network.getAllItems().isEmpty();
+            for (ItemStack stack : cachedItems) {
+                if (!stack.isEmpty()) return false;
+            }
+            return true;
         }
 
         @Override
         public ItemStack getItem(int pSlot) {
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null) {
-                var items = network.getAllItems();
-                if (pSlot < items.size()) {
-                    return items.get(pSlot);
-                }
+            // Use cache for display
+            if (pSlot >= 0 && pSlot < cachedItems.length) {
+                return cachedItems[pSlot];
             }
             return ItemStack.EMPTY;
         }
@@ -184,12 +217,23 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         @Override
         public ItemStack removeItem(int pSlot, int pAmount) {
             TowerNetwork network = blockEntity.getTower();
-            if (network != null) {
-                var items = network.getAllItems();
-                if (pSlot < items.size()) {
-                    ItemStack stack = items.get(pSlot);
-                    ItemStack filter = stack.copy();
-                    return network.extractItem(filter, Math.min(pAmount, stack.getCount()), false);
+            if (network != null && pSlot >= 0 && pSlot < cachedItems.length) {
+                ItemStack cached = cachedItems[pSlot];
+                if (!cached.isEmpty()) {
+                    ItemStack filter = cached.copy();
+                    ItemStack extracted = network.extractItem(filter, Math.min(pAmount, cached.getCount()), false);
+
+                    // Update cache
+                    if (!extracted.isEmpty()) {
+                        cached.shrink(extracted.getCount());
+                        if (cached.isEmpty()) {
+                            cachedItems[pSlot] = ItemStack.EMPTY;
+                        } else {
+                            cachedItems[pSlot] = cached;
+                        }
+                    }
+
+                    return extracted;
                 }
             }
             return ItemStack.EMPTY;
@@ -202,7 +246,10 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void setItem(int pSlot, ItemStack pStack) {
-            // Noop
+            // Update cache when setRemoteSlot is called
+            if (pSlot >= 0 && pSlot < cachedItems.length) {
+                cachedItems[pSlot] = pStack.copy();
+            }
         }
 
         @Override
@@ -217,7 +264,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void clearContent() {
-            // Noop
+            clearCache();
         }
     }
 
@@ -238,12 +285,9 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public ItemStack remove(int pAmount) {
-            System.out.println("REQUEST BELOW MADE USING: dragging item into/outto slot");
-
             // Only process on server side to avoid double extraction
             if (this.container instanceof StorageDisplayContainer displayContainer) {
-                if (displayContainer.blockEntity.getLevel() != null &&
-                    displayContainer.blockEntity.getLevel().isClientSide) {
+                if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
                     // On client, just return what we think we are removing
                     ItemStack displayStack = getItem();
                     if (!displayStack.isEmpty()) {
@@ -272,7 +316,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void set(ItemStack pStack) {
-            // Noop
+            this.container.setItem(this.index, pStack); // Allow setting for cache updates
         }
 
         @Override
