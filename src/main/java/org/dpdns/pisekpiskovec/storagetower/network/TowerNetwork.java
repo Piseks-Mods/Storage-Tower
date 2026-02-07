@@ -63,7 +63,7 @@ public class TowerNetwork {
 
         ItemStack remaining = stack.copy();
         for (StorageCrateBlockEntity crate : crates) {
-            remaining = crate.insertItem(stack, simulate);
+            remaining = crate.insertItem(remaining, simulate);
             if (remaining.isEmpty()) break;
         }
         System.out.println("INSERT RESULT: " + remaining + " x" + remaining.getCount());
@@ -73,8 +73,7 @@ public class TowerNetwork {
     public ItemStack extractItem(ItemStack filter, int amount, boolean simulate) {
         System.out.println("EXTRACT REQUEST: " + filter + " x" + amount + "; simulation=" + simulate);
 
-        if (!valid || filter.isEmpty() ||amount <= 0)
-            return ItemStack.EMPTY;
+        if (!valid || filter.isEmpty() || amount <= 0) return ItemStack.EMPTY;
 
         int remaining = amount;
         ItemStack result = ItemStack.EMPTY;
@@ -97,6 +96,10 @@ public class TowerNetwork {
     }
 
     public List<ItemStack> getAllItems() {
+        return getAllItems(null);
+    }
+
+    public List<ItemStack> getAllItems(String filter) {
         List<ItemStack> items = new ArrayList<>();
         if (!valid) return items;
 
@@ -120,6 +123,16 @@ public class TowerNetwork {
                 }
             }
         }
+
+        // Apply filter if provided
+        if (filter != null && !filter.trim().isEmpty()) {
+            String lowerFilter = filter.toLowerCase();
+            items.removeIf(stack -> !stack.getHoverName().getString().toLowerCase().contains(lowerFilter));
+        }
+
+        // Sort items alphabetically by display name
+        items.sort((a, b) -> a.getHoverName().getString().compareToIgnoreCase(b.getHoverName().getString()));
+
         return items;
     }
 
