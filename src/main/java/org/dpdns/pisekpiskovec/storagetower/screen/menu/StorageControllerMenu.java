@@ -56,7 +56,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
         if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
             // Ghost slot handling
-            Slot slot = this.slot.get(pSlotId);
+            Slot slot = this.slots.get(pSlotId);
             ItemStack slotStack = slot.getItem();
 
             if (slotStack.isEmpty()) {
