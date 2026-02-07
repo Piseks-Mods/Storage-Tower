@@ -6,74 +6,120 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 
-import java.util.List;
-
 public class StorageControllerMenu extends AbstractContainerMenu {
     private final StorageControllerBlockEntity blockEntity;
     private final StorageDisplayContainer storageContainer;
-    private static final int STORAGE_SLOTS = 24; // 8x3 grid, where would be 9th column there will be scrollbar
-    private final ItemStack[] lastSentSlots = new ItemStack[STORAGE_SLOTS];
+    private static final int STORAGE_SLOTS = 45; // 9x5 grid
+    private String searchFilter = "";
 
     public StorageControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER.get(), id);
         this.blockEntity = (StorageControllerBlockEntity) entity;
         this.storageContainer = new StorageDisplayContainer(blockEntity);
 
-        // Initialize last sent slots
-        for (int i = 0; i < lastSentSlots.length; i++) {
-            lastSentSlots[i] = ItemStack.EMPTY;
-        }
-
         // Storage slots
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 8; col++) {
-                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 8, 9 + col * 18, 19 + row * 18));
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 9; col++) {
+                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 9, 8 + col * 18, 18 + row * 18));
             }
         }
 
         // Player inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 122 + row * 18));
             }
         }
 
         // Player hotbar
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 180));
         }
+    }
+
+    public void setSearchFilter(String searchFilter) {
+        this.searchFilter = searchFilter;
+        this.broadcastChanges();
+    }
+
+    public String getSearchFilter() {
+        return searchFilter;
     }
 
     @Override
     public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
-        // Intercept clicks on ghost slots to prevent certain operations
         if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
-            // Ghost slots
-            if (pClickType == ClickType.PICKUP || pClickType == ClickType.PICKUP_ALL) {
-                super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow normal pickup
+            // Ghost slot handling
+            Slot slot = this.slot.get(pSlotId);
+            ItemStack slotStack = slot.getItem();
+
+            if (slotStack.isEmpty()) {
+                return; // Nothing to do
+            }
+
+            TowerNetwork network = blockEntity.getTower();
+            if (network == null) {
+                return;
+            }
+
+            // Left click = extract full stack, Right click = extract 1 item
+            // Shift+Left click = extract and move to player inventory
+            // Shift+Right click = extract 1 and move to player inventory
+
+            if (pClickType == ClickType.PICKUP) {
+                if (pButton == 0) { // Left click - extract full stack
+                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
+                    if (!extracted.isEmpty()) {
+                        pPlayer.containerMenu.setCarried(extracted);
+                    }
+                } else if (pButton == 1) { // Right click - extract 1 item
+                    ItemStack extracted = network.extractItem(slotStack, 1, false);
+                    if (!extracted.isEmpty()) {
+                        ItemStack carried = pPlayer.containerMenu.getCarried();
+                        if (carried.isEmpty()) {
+                            pPlayer.containerMenu.setCarried(extracted);
+                        } else if (ItemStack.isSameItemSameTags(carried, extracted)) {
+                            carried.grow(1);
+                        }
+                    }
+                }
+                this.broadcastChanges();
                 return;
             } else if (pClickType == ClickType.QUICK_MOVE) {
-                super.clicked(pSlotId, pButton, pClickType, pPlayer); // Allow shift-click
+                // Shift+click - move to player inventory
+                if (pButton == 0) { // Shift+Left click - full stack
+                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
+                    if (!extracted.isEmpty()) {
+                        if (!pPlayer.getInventory().add(extracted)) {
+                            pPlayer.drop(extracted, false);
+                        }
+                    }
+                } else if (pButton == 1) { // Shift+Right click - single item
+                    ItemStack extracted = network.extractItem(slotStack, 1, false);
+                    if (!extracted.isEmpty()) {
+                        if (!pPlayer.getInventory().add(extracted)) {
+                            pPlayer.drop(extracted, false);
+                        }
+                    }
+                }
+                this.broadcastChanges();
                 return;
             } else {
-                return; // Block all other click types on ghost slots (SWAP, CLONE, THROW, etc.)
+                return; // Block all other click types on ghost slots
             }
         }
 
-        // For non-ghost slots, handle normally
-        super.clicked(pSlotId, pButton, pClickType, pPlayer);
+        super.clicked(pSlotId, pButton, pClickType, pPlayer); // For non-ghost slots, handle normally
     }
 
     @Override
     public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
-        // Server-side only check
         if (pPlayer.level().isClientSide) {
             return ItemStack.EMPTY;
         }
@@ -86,18 +132,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         ItemStack slotStack = slot.getItem();
         ItemStack originalStack = slotStack.copy();
 
-        if (pIndex < STORAGE_SLOTS) {
-            // From storage to player
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null && !slotStack.isEmpty()) {
-                ItemStack extracted = network.extractItem(slotStack, slotStack.getCount(), false);
-                if (!extracted.isEmpty()) {
-                    if (!pPlayer.getInventory().add(extracted)) /* Try to add to player inventory */ {
-                        pPlayer.drop(extracted, false); // If couldn't add, drop it
-                    }
-                }
-            }
-        } else {
+        if (pIndex >= STORAGE_SLOTS) {
             // From player to storage
             TowerNetwork network = blockEntity.getTower();
             if (network != null) {
@@ -118,38 +153,21 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        if (blockEntity == null || blockEntity.getLevel() == null) {
+        if (blockEntity == null || blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide) {
             return;
         }
 
-        // Only update on server side
-        if (!blockEntity.getLevel().isClientSide) {
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null && network.isValid()) {
-                List<ItemStack> items = network.getAllItems();
+        TowerNetwork network = blockEntity.getTower();
+        if (network != null && network.isValid()) {
+            var items = network.getAllItems(searchFilter);
 
-                storageContainer.updateCache(items); // Update the container's cache
-
-                // Check each slot and send if changed
-                for (int i = 0; i < STORAGE_SLOTS; i++) {
-                    ItemStack currentStack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
-                    ItemStack lastStack = lastSentSlots[i];
-
-                    // Check if the stack has changed
-                    if (!ItemStack.matches(currentStack, lastStack)) {
-                        this.setRemoteSlot(i, currentStack);
-                        lastSentSlots[i] = currentStack.copy();
-                    }
-                }
-            } else {
-                // Clear all slots if network invalid
-                storageContainer.clearCache(); // Clear cache
-                for (int i = 0; i < STORAGE_SLOTS; i++) {
-                    if (!lastSentSlots[i].isEmpty()) {
-                        this.setRemoteSlot(i, ItemStack.EMPTY);
-                        lastSentSlots[i] = ItemStack.EMPTY;
-                    }
-                }
+            for (int i = 0; i < STORAGE_SLOTS; i++) {
+                ItemStack stack = i < items.size() ? items.get(i).copy() : ItemStack.EMPTY;
+                this.setRemoteSlot(i, stack);
+            }
+        } else {
+            for (int i = 0; i < STORAGE_SLOTS; i++) {
+                this.setRemoteSlot(i, ItemStack.EMPTY);
             }
         }
     }
