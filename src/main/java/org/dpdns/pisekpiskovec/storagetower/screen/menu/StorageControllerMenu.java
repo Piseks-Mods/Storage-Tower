@@ -181,93 +181,44 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplayContainer implements Container {
-        private final StorageControllerBlockEntity blockEntity;
-        private final ItemStack[] cachedItems = new ItemStack[STORAGE_SLOTS];
-
-        public StorageDisplayContainer(StorageControllerBlockEntity blockEntity) {
-            this.blockEntity = blockEntity;
-            // Initialize cache
-            for (int i = 0; i < cachedItems.length; i++) {
-                cachedItems[i] = ItemStack.EMPTY;
-            }
-        }
-
-        public void updateCache(List<ItemStack> items) {
-            for (int i = 0; i < cachedItems.length; i++) {
-                if (i < items.size()) {
-                    cachedItems[i] = items.get(i).copy();
-                } else {
-                    cachedItems[i] = ItemStack.EMPTY;
-                }
-            }
-        }
-
-        public void clearCache() {
-            for (int i = 0; i < cachedItems.length; i++) {
-                cachedItems[i] = ItemStack.EMPTY;
-            }
-        }
+    private record StorageDisplayContainer(StorageControllerBlockEntity blockEntity) implements Container {
 
         @Override
         public int getContainerSize() {
-            //return STORAGE_SLOTS;
-            return 24;
+            return 45;
         }
 
         @Override
         public boolean isEmpty() {
-            for (ItemStack stack : cachedItems) {
-                if (!stack.isEmpty()) return false;
-            }
-            return true;
+            TowerNetwork network = blockEntity.getTower();
+            return network == null || network.getAllItems().isEmpty();
         }
 
         @Override
         public ItemStack getItem(int pSlot) {
-            // Use cache for display
-            if (pSlot >= 0 && pSlot < cachedItems.length) {
-                return cachedItems[pSlot];
+            TowerNetwork network = blockEntity.getTower();
+            if (network != null) {
+                var items = network.getAllItems();
+                if (pSlot < items.size()) {
+                    return items.get(pSlot);
+                }
             }
             return ItemStack.EMPTY;
         }
 
         @Override
         public ItemStack removeItem(int pSlot, int pAmount) {
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null && pSlot >= 0 && pSlot < cachedItems.length) {
-                ItemStack cached = cachedItems[pSlot];
-                if (!cached.isEmpty()) {
-                    ItemStack filter = cached.copy();
-                    ItemStack extracted = network.extractItem(filter, Math.min(pAmount, cached.getCount()), false);
-
-                    // Update cache
-                    if (!extracted.isEmpty()) {
-                        cached.shrink(extracted.getCount());
-                        if (cached.isEmpty()) {
-                            cachedItems[pSlot] = ItemStack.EMPTY;
-                        } else {
-                            cachedItems[pSlot] = cached;
-                        }
-                    }
-
-                    return extracted;
-                }
-            }
             return ItemStack.EMPTY;
         }
 
         @Override
         public ItemStack removeItemNoUpdate(int pSlot) {
-            return removeItem(pSlot, 64);
+            return ItemStack.EMPTY;
         }
 
         @Override
         public void setItem(int pSlot, ItemStack pStack) {
-            // Update cache when setRemoteSlot is called
-            if (pSlot >= 0 && pSlot < cachedItems.length) {
-                cachedItems[pSlot] = pStack.copy();
-            }
+            // Noop
         }
 
         @Override
@@ -282,7 +233,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public void clearContent() {
-            clearCache();
+            // Noop
         }
     }
 
