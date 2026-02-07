@@ -244,58 +244,32 @@ public class StorageControllerMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack pStack) {
-            return false; // Can't place items directly in display slots
+            return false;
         }
 
         @Override
         public boolean mayPickup(Player pPlayer) {
-            return true;
+            return false;
         }
 
         @Override
         public ItemStack remove(int pAmount) {
-            // Only process on server side to avoid double extraction
-            if (this.container instanceof StorageDisplayContainer displayContainer) {
-                if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
-                    // On client, just return what we think we are removing
-                    ItemStack displayStack = getItem();
-                    if (!displayStack.isEmpty()) {
-                        ItemStack result = displayStack.copy();
-                        result.setCount(Math.min(pAmount, displayStack.getCount()));
-                        return result;
-                    }
-                    return ItemStack.EMPTY;
-                }
-            }
-
-            // Server side - do the actual extraction
-            ItemStack displayStack = getItem();
-            if (displayStack.isEmpty()) {
-                return ItemStack.EMPTY;
-            }
-
-            return this.container.removeItem(this.index, pAmount);
-        }
-
-        @Override
-        public void onTake(Player pPlayer, ItemStack pStack) {
-            this.setChanged();
-            super.onTake(pPlayer, pStack);
+            return ItemStack.EMPTY;
         }
 
         @Override
         public void set(ItemStack pStack) {
-            this.container.setItem(this.index, pStack); // Allow setting for cache updates
+            // Noop
         }
 
         @Override
         public ItemStack safeInsert(ItemStack pStack) {
-            return pStack; // Ghosts can't accept items
+            return pStack;
         }
 
         @Override
         public ItemStack safeInsert(ItemStack pStack, int pIncrement) {
-            return pStack; // Ghosts can't accept items
+            return pStack;
         }
     }
 }
