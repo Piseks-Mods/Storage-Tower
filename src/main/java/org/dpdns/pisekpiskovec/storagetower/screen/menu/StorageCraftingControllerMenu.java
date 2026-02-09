@@ -252,11 +252,16 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
+    private static class StorageDisplayContainer implements Container {
+        private final StorageCraftingControllerBlockEntity blockEntity;
+
+        public StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) {
+            this.blockEntity = blockEntity;
+        }
 
         @Override
         public int getContainerSize() {
-            return 3;
+            return 18;
         }
 
         @Override
@@ -279,21 +284,12 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         @Override
         public ItemStack removeItem(int pSlot, int pAmount) {
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null) {
-                var items = network.getAllItems();
-                if (pSlot < items.size()) {
-                    ItemStack stack = items.get(pSlot);
-                    ItemStack filter = stack.copy();
-                    return network.extractItem(filter, Math.min(pAmount, stack.getCount()), false);
-                }
-            }
             return ItemStack.EMPTY;
         }
 
         @Override
         public ItemStack removeItemNoUpdate(int pSlot) {
-            return removeItem(pSlot, 64);
+            return ItemStack.EMPTY;
         }
 
         @Override
