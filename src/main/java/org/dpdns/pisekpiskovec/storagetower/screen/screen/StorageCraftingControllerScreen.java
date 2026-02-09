@@ -1,32 +1,42 @@
 package org.dpdns.pisekpiskovec.storagetower.screen.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import org.dpdns.pisekpiskovec.storagetower.StorageTower;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
-import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageCraftingControllerMenu;
 
-import java.util.List;
-
 public class StorageCraftingControllerScreen extends AbstractContainerScreen<StorageCraftingControllerMenu> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(StorageTower.MOD_ID, "textures/gui/storage_crafting_controller.png");
-
     private final StorageCraftingControllerBlockEntity blockEntity;
-    private int scrollOffset = 0;
-    private int maxScroll = 0;
+    private EditBox searchBox;
 
     public StorageCraftingControllerScreen(StorageCraftingControllerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.blockEntity = menu.getBlockEntity();
-        this.imageHeight = 166;
+        this.imageHeight = 168;
         this.imageWidth = 176;
+        this.inventoryLabelY = this.imageHeight - 82;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        this.searchBox = new EditBox(this.font, this.leftPos + 8, this.topPos + 5, 160, 10, Component.translatable("gui.storagetower.search"));
+        this.searchBox.setBordered(true);
+        this.searchBox.setMaxLength(50);
+        this.searchBox.setResponder(this::onSearchChanged);
+        this.searchBox.setValue(menu.getSearchFilter());
+        this.addRenderableWidget(this.searchBox);
+    }
+
+    private void onSearchChanged(String newValue) {
+        menu.setSearchFilter(newValue);
     }
 
     @Override
@@ -37,33 +47,34 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
         int x = leftPos;
         int y = topPos;
 
-        // Main background
-        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFF8B8B8B);
+        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFFC6C6C6); // Main background
+        pGuiGraphics.fill(x + 7, y + 4, x + 169, y + 16, 0xFF000000); // Search box background
+
+        // Storage display area background
+        pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 55, 0xFF8B8B8B);
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 9; col++) {
+                int slotX = x + 8 + col * 18;
+                int slotY = y + 18 + row * 18;
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFFC6C6C6);
+            }
+        }
 
         // Crafting grid area background
-        pGuiGraphics.fill(x + 29, y + 16, x + 83, y + 70, 0xFF373737);
+        pGuiGraphics.fill(x + 52, y + 17, x + 106, y + 71, 0xFF8B8B8B);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                int slotX = x + 30 + col * 18;
-                int slotY = y + 17 + row * 18;
-                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
+                int slotX = x + 53 + col * 18;
+                int slotY = y + 18 + row * 18;
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFFC6C6C6);
             }
         }
 
         // Crafting result area background
-        pGuiGraphics.fill(x + 123, y + 34, x + 141, y + 52, 0xFF373737);
-        pGuiGraphics.fill(x + 124, y + 35, x + 140, y + 51, 0xFF8B8B8B);
+        pGuiGraphics.fill(x + 142, y + 32, x + 160, y + 50, 0xFF8B8B8B);
+        pGuiGraphics.fill(x + 143, y + 33, x + 159, y + 49, 0xFFC6C6C6);
 
-        // Storage display area background
-        pGuiGraphics.fill(x + 8, y + 16, x + 26, y + 70, 0xFF373737);
-        for (int i = 0; i < 3; i++) {
-            int slotX = x + 9;
-            int slotY = y + 17 + i * 18;
-            pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
-        }
-
-        // Render storage items
-        renderStorageItems(pGuiGraphics);
+        pGuiGraphics.fill(x + 115, y + 36, x + 135, y + 44, 0xFF8B8B8B); // Arrow from crafting to result
     }
 
     @Override
@@ -74,83 +85,54 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
 
     @Override
     protected void renderLabels(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY) {
-        pGuiGraphics.drawString(this.font, this.title, 8, 6, 0x404040, false);
         pGuiGraphics.drawString(this.font, this.playerInventoryTitle, 8, this.imageHeight - 94, 0x404040, false);
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics pGuiGraphics, int pX, int pY) {
-        super.renderTooltip(pGuiGraphics, pX, pY);
-
-        // Custom tooltip for storage items
-        TowerNetwork network = blockEntity.getTower();
-        if (network != null) {
-            List<ItemStack> items = network.getAllItems();
-
-            int startX = leftPos + 9;
-            int startY = topPos + 19;
-
-            int startIndex = scrollOffset;
-            int endIndex = Math.min(startIndex + 3, items.size());
-
-            for (int i = startIndex; i < endIndex; i++) {
-                ItemStack stack = items.get(i);
-                if (!stack.isEmpty()) {
-                    int displayIndex = i - startIndex;
-                    int slotY = startY + displayIndex * 18;
-
-                    if (pX >= startX && pX < startX + 16 && pY >= slotY && pY < slotY + 16) {
-                        pGuiGraphics.renderTooltip(this.font, stack, pX, pY);
-                        break;
-                    }
-                }
+    public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+        if (this.searchBox.isFocused()) {
+            if (pKeyCode == 256) { // ESC key
+                this.searchBox.setFocused(false);
+                return true;
             }
+            return this.searchBox.keyPressed(pKeyCode, pScanCode, pModifiers);
         }
-    }
 
-    private void renderStorageItems(GuiGraphics pGuiGraphics) {
-        TowerNetwork network = blockEntity.getTower();
-        if (network != null) {
-            List<ItemStack> items = network.getAllItems();
-
-            maxScroll = Math.max(0, items.size() - 3); // Calculate max scroll
-
-            int startX = leftPos + 9;
-            int startY = topPos + 19;
-
-            int startIndex = scrollOffset;
-            int endIndex = Math.min(startIndex + 3, items.size());
-
-            for (int i = startIndex; i < endIndex; i++) {
-                ItemStack stack = items.get(i);
-                if (!stack.isEmpty()) {
-                    int displayIndex = i - startIndex;
-                    int slotY = startY + displayIndex * 18;
-
-                    pGuiGraphics.renderItem(stack, startX, slotY);
-                    pGuiGraphics.renderItemDecorations(this.font, stack, startX, slotY);
-                }
-            }
+        // Autofocus search box when typing
+        if (pKeyCode != 256 && !this.searchBox.isFocused()) {
+            this.searchBox.setFocused(true);
+            return this.searchBox.keyPressed(pKeyCode, pScanCode, pModifiers);
         }
+
+        return super.keyPressed(pKeyCode, pScanCode, pModifiers);
     }
 
     @Override
-    public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
-        // Only scroll when mouse is over storage display area
-        int startX = leftPos + 8;
-        int startY = topPos + 18;
-        int endX = startX + 18;
-        int endY = startY + 60;
+    public boolean charTyped(char pCodePoint, int pModifiers) {
+        if (this.searchBox.isFocused()) return this.searchBox.charTyped(pCodePoint, pModifiers);
 
-        if (pMouseX >= startX && pMouseX <= endX && pMouseY >= startY && pMouseY <= endY) {
-            if (pDelta > 0) {
-                scrollOffset = Math.max(0, scrollOffset - 1);
-                return true;
-            } else if (pDelta < 0) {
-                scrollOffset = Math.min(maxScroll, scrollOffset + 1);
-                return true;
-            }
-        }
-        return super.mouseScrolled(pMouseX, pMouseY, pDelta);
+        // Autofocus search box when typing
+        this.searchBox.setFocused(true);
+        return this.searchBox.charTyped(pCodePoint, pModifiers);
+    }
+
+    @Override
+    public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+        if (this.searchBox.mouseClicked(pMouseX, pMouseY, pButton)) return true;
+        if (this.searchBox.isFocused()) this.searchBox.setFocused(false); // Unfocus search box when clicking elsewhere
+        return super.mouseClicked(pMouseX, pMouseY, pButton);
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (this.searchBox != null) this.searchBox.tick();
+    }
+
+    @Override
+    public void resize(Minecraft pMinecraft, int pWidth, int pHeight) {
+        String searchText = this.searchBox.getValue();
+        super.resize(pMinecraft, pWidth, pHeight);
+        this.searchBox.setValue(searchText);
     }
 }
