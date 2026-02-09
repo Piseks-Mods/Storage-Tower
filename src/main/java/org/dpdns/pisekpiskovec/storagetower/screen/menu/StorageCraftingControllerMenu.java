@@ -20,8 +20,9 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     private final ResultContainer resultContainer;
     private final ContainerLevelAccess access;
     private final Player player;
-    private static final int STORAGE_SLOTS = 3; // 3 vertical slots
+    private static final int STORAGE_SLOTS = 18; // 2x9 grid
     private final StorageDisplayContainer storageContainer;
+    private String searchFilter = "";
 
     public StorageCraftingControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER_CRAFTING.get(), id);
@@ -33,31 +34,98 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         this.storageContainer = new StorageDisplayContainer(blockEntity);
 
         // Storage display slots
-        for (int i = 0; i < 3; i++) {
-            this.addSlot(new StorageDisplaySlot(storageContainer, i, 9, 17 + i * 18, this));
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 9; col++) {
+                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 9, 8 + col * 18, 18 + row * 18, this));
+            }
         }
 
-        // Crafting result slot
-        this.addSlot(new ResultSlot(this.player, this.craftingContainer, this.resultContainer, 0, 124, 35));
+        this.addSlot(new ResultSlot(this.player, this.craftingContainer, this.resultContainer, 0, 143, 33)); // Crafting result slot
 
         // Crafting grid
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 3; ++col) {
-                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 30 + col * 18, 17 + row * 18));
+                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 53 + col * 18, 18 + row * 18));
             }
         }
 
         // Player inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 86 + row * 18));
             }
         }
 
         // Player hotbar
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 144));
         }
+    }
+
+    public void setSearchFilter(String searchFilter) {
+        this.searchFilter = searchFilter;
+        this.broadcastChanges();
+    }
+
+    public String getSearchFilter() {
+        return searchFilter;
+    }
+
+    @Override
+    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
+        if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
+            // Ghost slot handling
+            Slot slot = this.slots.get(pSlotId);
+            ItemStack slotStack = slot.getItem();
+
+            if (slotStack.isEmpty()) return;
+
+            TowerNetwork network = blockEntity.getTower();
+            if (network == null) return;
+
+            if (pClickType == ClickType.PICKUP) {
+                if (pButton == 0) { // Left click - extract full stack
+                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
+                    if (!extracted.isEmpty()) {
+                        pPlayer.containerMenu.setCarried(extracted);
+                    }
+                } else if (pButton == 1) { // Right click - extract 1 item
+                    ItemStack extracted = network.extractItem(slotStack, 1, false);
+                    if (!extracted.isEmpty()) {
+                        ItemStack carried = pPlayer.containerMenu.getCarried();
+                        if (carried.isEmpty()) {
+                            pPlayer.containerMenu.setCarried(extracted);
+                        } else if (ItemStack.isSameItemSameTags(carried, extracted)) {
+                            carried.grow(1);
+                        }
+                    }
+                }
+                this.broadcastChanges();
+                return;
+            } else if (pClickType == ClickType.QUICK_MOVE) {
+                if (pButton == 0) { // Shift+Left click - full stack
+                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
+                    if (!extracted.isEmpty()) {
+                        if (!player.getInventory().add(extracted)) {
+                            pPlayer.drop(extracted, false);
+                        }
+                    }
+                } else if (pButton == 1) { // Shift+Right click - single item
+                    ItemStack extracted = network.extractItem(slotStack, 1, false);
+                    if (!extracted.isEmpty()) {
+                        if (!pPlayer.getInventory().add(extracted)) {
+                            pPlayer.drop(extracted, false);
+                        }
+                    }
+                }
+                this.broadcastChanges();
+                return;
+            } else {
+                return;
+            }
+        }
+
+        super.clicked(pSlotId, pButton, pClickType, pPlayer);
     }
 
     @Override
@@ -80,7 +148,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
             }
 
             resultContainer.setItem(0, result);
-            menu.setRemoteSlot(0, result);
+            menu.setRemoteSlot(STORAGE_SLOTS, result);
             menu.broadcastChanges();
         }
     }
@@ -94,23 +162,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
             ItemStack slotStack = slot.getItem();
             itemStack = slotStack.copy();
 
-            if (pIndex < STORAGE_SLOTS) {
-                // From storage display to player inventory
-                // This is a ghost slot, so we need to extract from the network manually
-                TowerNetwork network = blockEntity.getTower();
-                if (network != null && !slotStack.isEmpty()) {
-                    // Extract the item from the network
-                    ItemStack extracted = network.extractItem(slotStack, slotStack.getCount(), false);
-
-                    if (!extracted.isEmpty()) {
-                        if (!pPlayer.getInventory().add(extracted)) /* Try to add to player inventory */ {
-                            pPlayer.drop(extracted, false); // If couldn't add, drop it
-                        }
-                    }
-
-                    this.broadcastChanges();
-                }
-            } else if (pIndex == STORAGE_SLOTS) {
+            if (pIndex == STORAGE_SLOTS) {
                 // Result slot - craft the item
                 this.access.execute((level, pos) -> {
                     slotStack.getItem().onCraftedBy(slotStack, level, pPlayer);
@@ -130,16 +182,13 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                 // From player inventory
                 // Try crafting grid first, then storage
                 if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 1, STORAGE_SLOTS + 10, false)) {
-                    // Try inserting into tower network
+                    // Try inserting into the network
                     TowerNetwork network = blockEntity.getTower();
                     if (network != null) {
                         ItemStack remaining = network.insertItem(slotStack, false);
                         slotStack.setCount(remaining.getCount());
-                        if (remaining.isEmpty()) {
-                            slot.set(ItemStack.EMPTY);
-                        } else {
-                            slot.setChanged();
-                        }
+                        if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
+                        else slot.setChanged();
                         this.broadcastChanges();
                         return itemStack;
                     }
@@ -153,7 +202,6 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                     }
                 }
             }
-
             if (slotStack.isEmpty()) {
                 slot.setByPlayer(ItemStack.EMPTY);
             } else {
@@ -177,10 +225,9 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        // Update all ghost slots with current network data
         TowerNetwork network = blockEntity.getTower();
         if (network != null) {
-            var items = network.getAllItems();
+            var items = network.getAllItems(searchFilter);
             for (int i = 0; i < STORAGE_SLOTS; i++) {
                 ItemStack newStack = i < items.size() ? items.get(i) : ItemStack.EMPTY;
                 this.setRemoteSlot(i, newStack);
@@ -205,12 +252,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplayContainer implements Container {
-        private final StorageCraftingControllerBlockEntity blockEntity;
-
-        public StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) {
-            this.blockEntity = blockEntity;
-        }
+    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
 
         @Override
         public int getContainerSize() {
