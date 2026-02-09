@@ -252,12 +252,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
-    private static class StorageDisplayContainer implements Container {
-        private final StorageCraftingControllerBlockEntity blockEntity;
-
-        public StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) {
-            this.blockEntity = blockEntity;
-        }
+    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
 
         @Override
         public int getContainerSize() {
@@ -323,51 +318,17 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack pStack) {
-            return false; // Can't place items directly in display slots
+            return false;
         }
 
         @Override
         public boolean mayPickup(Player pPlayer) {
-            return true;
+            return false;
         }
 
         @Override
         public ItemStack remove(int pAmount) {
-            // Only process on server side to avoid double extraction
-            if (this.container instanceof StorageDisplayContainer displayContainer) {
-                if (displayContainer.blockEntity.getLevel() != null && displayContainer.blockEntity.getLevel().isClientSide) {
-                    // On client, just return what we think we are removing
-                    ItemStack displayStack = getItem();
-                    if (!displayStack.isEmpty()) {
-                        ItemStack result = displayStack.copy();
-                        result.setCount(Math.min(pAmount, displayStack.getCount()));
-                        return result;
-                    }
-                    return ItemStack.EMPTY;
-                }
-            }
-
-            // Server side - do the actual extraction
-            ItemStack displayStack = getItem();
-            if (displayStack.isEmpty()) {
-                return ItemStack.EMPTY;
-            }
-
-            ItemStack extracted = this.container.removeItem(this.index, pAmount); // Extract from the network
-
-            // Mark container as changed to trigger client sync
-            if (!extracted.isEmpty()) {
-                this.setChanged();
-            }
-
-            return extracted;
-        }
-
-        @Override
-        public void onTake(Player pPlayer, ItemStack pStack) {
-            this.setChanged();
-            this.menu.broadcastChanges();
-            super.onTake(pPlayer, pStack);
+            return ItemStack.EMPTY;
         }
 
         @Override
