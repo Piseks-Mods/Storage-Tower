@@ -11,6 +11,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
 import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageControllerMenu;
 
 import java.util.List;
@@ -157,7 +159,7 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
             int gridSlot = scrollOffset * GRID_COLS + row * GRID_COLS + col;
 
             ClickType clickType = hasShiftDown() ? ClickType.QUICK_MOVE : ClickType.PICKUP; // Determine click type
-            menu.clickItemGrid(gridSlot, pButton, clickType, minecraft.player); // Send click to menu
+            ModNetworking.sendToServer(new GridClickPacket(gridSlot, pButton, clickType));
             return true;
         }
 
@@ -167,7 +169,7 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
     @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
         if (this.searchBox.isFocused()) {
-            if (pKeyCode == 265) { // ESC key
+            if (pKeyCode == 256) { // ESC key
                 this.searchBox.setFocused(false);
                 return true;
             }

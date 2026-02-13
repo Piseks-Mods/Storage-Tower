@@ -11,6 +11,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
 import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageCraftingControllerMenu;
 
 import java.util.List;
@@ -165,7 +167,7 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
             int gridSlot = scrollOffset * GRID_COLS + row * GRID_COLS + col;
 
             ClickType clickType = hasShiftDown() ? ClickType.QUICK_MOVE : ClickType.PICKUP;
-            menu.clickItemGrid(gridSlot, pButton, clickType, minecraft.player);
+            ModNetworking.sendToServer(new GridClickPacket(gridSlot, pButton, clickType));
             return true;
         }
 

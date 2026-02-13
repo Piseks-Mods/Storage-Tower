@@ -7,6 +7,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.dpdns.pisekpiskovec.storagetower.StorageTower;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.StorageItemUpdatePacket;
 
 public class ModNetworking {
@@ -20,10 +21,15 @@ public class ModNetworking {
     }
 
     public static void register() {
-        CHANNEL.messageBuilder(StorageItemUpdatePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT).decoder(StorageItemUpdatePacket::decode).encoder(StorageItemUpdatePacket::encode).consumerMainThread(StorageItemUpdatePacket::handle).add();
+        CHANNEL.messageBuilder(StorageItemUpdatePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT).decoder(StorageItemUpdatePacket::decode).encoder(StorageItemUpdatePacket::encode).consumerMainThread(StorageItemUpdatePacket::handle).add(); // Server -> Client: Storage item updates
+        CHANNEL.messageBuilder(GridClickPacket.class, id(), NetworkDirection.PLAY_TO_SERVER).decoder(GridClickPacket::decode).encoder(GridClickPacket::encode).consumerMainThread(GridClickPacket::handle).add(); // Client -> Server: Grid Clicks
     }
 
     public static void sendToPlayer(StorageItemUpdatePacket packet, ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendToServer(GridClickPacket packet) {
+        CHANNEL.sendToServer(packet);
     }
 }
