@@ -15,6 +15,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.item.ModItems;
+import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
 import org.dpdns.pisekpiskovec.storagetower.screen.screen.StorageControllerScreen;
 import org.dpdns.pisekpiskovec.storagetower.screen.screen.StorageCraftingControllerScreen;
@@ -44,6 +45,7 @@ public class StorageTower {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(ModNetworking::register);
     }
 
     // Add the example block item to the building blocks tab
