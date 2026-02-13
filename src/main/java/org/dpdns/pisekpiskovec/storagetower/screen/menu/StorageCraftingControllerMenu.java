@@ -11,8 +11,13 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
 import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.StorageItemUpdatePacket;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     private final StorageCraftingControllerBlockEntity blockEntity;
@@ -20,9 +25,9 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     private final ResultContainer resultContainer;
     private final ContainerLevelAccess access;
     private final Player player;
-    private static final int STORAGE_SLOTS = 18; // 2x9 grid
-    private final StorageDisplayContainer storageContainer;
     private String searchFilter = "";
+    private List<ItemStack> clientItems = new ArrayList<>(); // Client-side cache
+    private int updateCooldown = 0; // Track last update to avoid spam
 
     public StorageCraftingControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER_CRAFTING.get(), id);
@@ -31,101 +36,80 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         this.resultContainer = new ResultContainer();
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
         this.player = playerInv.player;
-        this.storageContainer = new StorageDisplayContainer(blockEntity);
 
-        // Storage display slots
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new StorageDisplaySlot(storageContainer, col + row * 9, 8 + col * 18, 18 + row * 18, this));
-            }
-        }
-
-        this.addSlot(new ResultSlot(this.player, this.craftingContainer, this.resultContainer, 0, 143, 33)); // Crafting result slot
+        this.addSlot(new ResultSlot(this.player, this.craftingContainer, this.resultContainer, 0, 143, 73)); // Crafting result slot
 
         // Crafting grid
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 3; ++col) {
-                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 53 + col * 18, 18 + row * 18));
+                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 53 + col * 18, 58 + row * 18));
             }
         }
 
         // Player inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 86 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 126 + row * 18));
             }
         }
 
         // Player hotbar
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 144));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 184));
         }
     }
 
     public void setSearchFilter(String searchFilter) {
         this.searchFilter = searchFilter;
-        this.broadcastChanges();
+        updateClientItemList();
     }
 
     public String getSearchFilter() {
         return searchFilter;
     }
 
-    @Override
-    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
-        if (pSlotId >= 0 && pSlotId < STORAGE_SLOTS) {
-            // Ghost slot handling
-            Slot slot = this.slots.get(pSlotId);
-            ItemStack slotStack = slot.getItem();
+    public void updateClientItems(List<ItemStack> items) {
+        this.clientItems = new ArrayList<>(items);
+    }
 
-            if (slotStack.isEmpty()) return;
+    public List<ItemStack> getClientItems() {
+        return clientItems;
+    }
 
-            TowerNetwork network = blockEntity.getTower();
-            if (network == null) return;
+    public void clickItemGrid(int gridSlot, int button, ClickType clickType, Player player) {
+        if (gridSlot < 0 || gridSlot >= clientItems.size()) return;
 
-            if (pClickType == ClickType.PICKUP) {
-                if (pButton == 0) { // Left click - extract full stack
-                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
-                    if (!extracted.isEmpty()) {
-                        pPlayer.containerMenu.setCarried(extracted);
-                    }
-                } else if (pButton == 1) { // Right click - extract 1 item
-                    ItemStack extracted = network.extractItem(slotStack, 1, false);
-                    if (!extracted.isEmpty()) {
-                        ItemStack carried = pPlayer.containerMenu.getCarried();
-                        if (carried.isEmpty()) {
-                            pPlayer.containerMenu.setCarried(extracted);
-                        } else if (ItemStack.isSameItemSameTags(carried, extracted)) {
-                            carried.grow(1);
-                        }
-                    }
+        ItemStack displayStack = clientItems.get(gridSlot);
+        if (displayStack.isEmpty()) return;
+        if (player.level().isClientSide) return;
+
+        TowerNetwork network = blockEntity.getTower();
+        if (network == null) return;
+
+        if (clickType == ClickType.PICKUP) {
+            if (button == 0) { // Left click
+                ItemStack extracted = network.extractItem(displayStack, Math.min(displayStack.getCount(), displayStack.getMaxStackSize()), false);
+                if (!extracted.isEmpty()) player.containerMenu.setCarried(extracted);
+            } else if (button == 1) { // Right click
+                ItemStack extracted = network.extractItem(displayStack, 1, false);
+                if (!extracted.isEmpty()) {
+                    ItemStack carried = player.containerMenu.getCarried();
+                    if (carried.isEmpty()) player.containerMenu.setCarried(extracted);
+                    else if (ItemStack.isSameItemSameTags(carried, extracted)) carried.grow(1);
                 }
-                this.broadcastChanges();
-                return;
-            } else if (pClickType == ClickType.QUICK_MOVE) {
-                if (pButton == 0) { // Shift+Left click - full stack
-                    ItemStack extracted = network.extractItem(slotStack, Math.min(slotStack.getCount(), slotStack.getMaxStackSize()), false);
-                    if (!extracted.isEmpty()) {
-                        if (!player.getInventory().add(extracted)) {
-                            pPlayer.drop(extracted, false);
-                        }
-                    }
-                } else if (pButton == 1) { // Shift+Right click - single item
-                    ItemStack extracted = network.extractItem(slotStack, 1, false);
-                    if (!extracted.isEmpty()) {
-                        if (!pPlayer.getInventory().add(extracted)) {
-                            pPlayer.drop(extracted, false);
-                        }
-                    }
+            }
+        } else if (clickType == ClickType.QUICK_MOVE) {
+            if (button == 0) { // Shift+Left click
+                ItemStack extracted = network.extractItem(displayStack, Math.min(displayStack.getCount(), displayStack.getMaxStackSize()), false);
+                if (!extracted.isEmpty()) if (!player.getInventory().add(extracted)) player.drop(extracted, false);
+            } else if (button == 1) { // Shift+Right click
+                ItemStack extracted = network.extractItem(displayStack, 1, false);
+                if (!extracted.isEmpty()) {
+                    if (!player.getInventory().add(extracted)) player.drop(extracted, false);
                 }
-                this.broadcastChanges();
-                return;
-            } else {
-                return;
             }
         }
-
-        super.clicked(pSlotId, pButton, pClickType, pPlayer);
+        updateClientItemList();
     }
 
     @Override
@@ -142,13 +126,12 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
             if (optional.isPresent()) {
                 CraftingRecipe recipe = optional.get();
-                if (resultContainer.setRecipeUsed(level, (ServerPlayer) player, recipe)) {
+                if (resultContainer.setRecipeUsed(level, (ServerPlayer) player, recipe))
                     result = recipe.assemble(craftingContainer, level.registryAccess());
-                }
             }
 
             resultContainer.setItem(0, result);
-            menu.setRemoteSlot(STORAGE_SLOTS, result);
+            menu.setRemoteSlot(0, result);
             menu.broadcastChanges();
         }
     }
@@ -162,62 +145,39 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
             ItemStack slotStack = slot.getItem();
             itemStack = slotStack.copy();
 
-            if (pIndex == STORAGE_SLOTS) {
-                // Result slot - craft the item
+            if (pIndex == 0) { // Result slot
                 this.access.execute((level, pos) -> {
                     slotStack.getItem().onCraftedBy(slotStack, level, pPlayer);
                 });
 
-                if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 10, STORAGE_SLOTS + 46, true)) {
-                    return ItemStack.EMPTY;
-                }
-
+                if (!this.moveItemStackTo(slotStack, 10, 46, true)) return ItemStack.EMPTY;
                 slot.onQuickCraft(slotStack, itemStack);
-            } else if (pIndex >= STORAGE_SLOTS + 1 && pIndex < STORAGE_SLOTS + 10) {
-                // From crafting grid to player inventory
-                if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 10, STORAGE_SLOTS + 46, false)) {
-                    return ItemStack.EMPTY;
-                }
-            } else if (pIndex >= STORAGE_SLOTS + 10 && pIndex < STORAGE_SLOTS + 46) {
-                // From player inventory
-                // Try crafting grid first, then storage
-                if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 1, STORAGE_SLOTS + 10, false)) {
-                    // Try inserting into the network
+            } else if (pIndex >= 1 && pIndex < 10) { // From crafting grid
+                if (!this.moveItemStackTo(slotStack, 10, 46, false)) return ItemStack.EMPTY;
+            } else if (pIndex >= 10 && pIndex < 46) { // From player inventory
+                if (!this.moveItemStackTo(slotStack, 1, 10, false)) {
+                    // Try inserting to tower network
                     TowerNetwork network = blockEntity.getTower();
                     if (network != null) {
                         ItemStack remaining = network.insertItem(slotStack, false);
                         slotStack.setCount(remaining.getCount());
                         if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
                         else slot.setChanged();
-                        this.broadcastChanges();
+                        updateClientItemList();
                         return itemStack;
                     }
 
-                    if (pIndex < STORAGE_SLOTS + 37) {
-                        if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 37, STORAGE_SLOTS + 46, false)) {
-                            return ItemStack.EMPTY;
-                        }
-                    } else if (!this.moveItemStackTo(slotStack, STORAGE_SLOTS + 10, STORAGE_SLOTS + 37, false)) {
-                        return ItemStack.EMPTY;
-                    }
+                    if (pIndex < 37) if (!this.moveItemStackTo(slotStack, 37, 46, false)) return ItemStack.EMPTY;
+                    else if (!this.moveItemStackTo(slotStack, 10, 37, false)) return ItemStack.EMPTY;
                 }
             }
-            if (slotStack.isEmpty()) {
-                slot.setByPlayer(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
 
-            if (slotStack.getCount() == itemStack.getCount()) {
-                return ItemStack.EMPTY;
-            }
-
+            if (slotStack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
+            else slot.setChanged();
+            if (slotStack.getCount() == itemStack.getCount()) return ItemStack.EMPTY;
             slot.onTake(pPlayer, slotStack);
-            if (pIndex == STORAGE_SLOTS) {
-                pPlayer.drop(slotStack, false);
-            }
+            if (pIndex == 0) pPlayer.drop(slotStack, false);
         }
-
         return itemStack;
     }
 
@@ -225,12 +185,24 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     public void broadcastChanges() {
         super.broadcastChanges();
 
+        if (blockEntity == null || blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide) return;
+        updateCooldown--;
+        if (updateCooldown <= 0) {
+            updateCooldown = 5;
+            updateClientItemList();
+        }
+    }
+
+    private void updateClientItemList() {
+        if (blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide) return;
+
         TowerNetwork network = blockEntity.getTower();
-        if (network != null) {
-            var items = network.getAllItems(searchFilter);
-            for (int i = 0; i < STORAGE_SLOTS; i++) {
-                ItemStack newStack = i < items.size() ? items.get(i) : ItemStack.EMPTY;
-                this.setRemoteSlot(i, newStack);
+        if (network != null && network.isValid()) {
+            List<ItemStack> items = network.getAllItems(searchFilter);
+            for (Player player : blockEntity.getLevel().players()) {
+                if (player instanceof ServerPlayer serverPlayer && player.containerMenu == this) {
+                    ModNetworking.sentToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
+                }
             }
         }
     }
@@ -250,100 +222,5 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
     public StorageCraftingControllerBlockEntity getBlockEntity() {
         return blockEntity;
-    }
-
-    private record StorageDisplayContainer(StorageCraftingControllerBlockEntity blockEntity) implements Container {
-
-        @Override
-        public int getContainerSize() {
-            return 18;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            TowerNetwork network = blockEntity.getTower();
-            return network == null || network.getAllItems().isEmpty();
-        }
-
-        @Override
-        public ItemStack getItem(int pSlot) {
-            TowerNetwork network = blockEntity.getTower();
-            if (network != null) {
-                var items = network.getAllItems();
-                if (pSlot < items.size()) {
-                    return items.get(pSlot);
-                }
-            }
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public ItemStack removeItem(int pSlot, int pAmount) {
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public ItemStack removeItemNoUpdate(int pSlot) {
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public void setItem(int pSlot, ItemStack pStack) {
-            // Noop
-        }
-
-        @Override
-        public void setChanged() {
-            blockEntity.setChanged();
-        }
-
-        @Override
-        public boolean stillValid(Player pPlayer) {
-            return true;
-        }
-
-        @Override
-        public void clearContent() {
-            // Noop
-        }
-    }
-
-    private static class StorageDisplaySlot extends Slot {
-        private final AbstractContainerMenu menu;
-
-        public StorageDisplaySlot(Container container, int index, int x, int y, AbstractContainerMenu menu) {
-            super(container, index, x, y);
-            this.menu = menu;
-        }
-
-        @Override
-        public boolean mayPlace(ItemStack pStack) {
-            return false;
-        }
-
-        @Override
-        public boolean mayPickup(Player pPlayer) {
-            return false;
-        }
-
-        @Override
-        public ItemStack remove(int pAmount) {
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public void set(ItemStack pStack) {
-            // Noop
-        }
-
-        @Override
-        public ItemStack safeInsert(ItemStack pStack) {
-            return pStack; // Ghosts can't accept items
-        }
-
-        @Override
-        public ItemStack safeInsert(ItemStack pStack, int pIncrement) {
-            return pStack; // Ghosts can't accept items
-        }
     }
 }
