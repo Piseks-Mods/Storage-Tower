@@ -201,7 +201,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
             List<ItemStack> items = network.getAllItems(searchFilter);
             for (Player player : blockEntity.getLevel().players()) {
                 if (player instanceof ServerPlayer serverPlayer && player.containerMenu == this) {
-                    ModNetworking.sentToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
+                    ModNetworking.sendToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
                 }
             }
         }

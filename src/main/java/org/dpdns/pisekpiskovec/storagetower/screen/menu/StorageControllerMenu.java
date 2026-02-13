@@ -143,7 +143,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
             // Send to all players viewing this menu
             for (Player player : blockEntity.getLevel().players()) {
                 if (player instanceof ServerPlayer serverPlayer && player.containerMenu == this) {
-                    ModNetworking.sentToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
+                    ModNetworking.sendToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
                 }
             }
         }

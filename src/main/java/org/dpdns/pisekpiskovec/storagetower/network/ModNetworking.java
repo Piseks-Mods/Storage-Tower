@@ -23,7 +23,7 @@ public class ModNetworking {
         CHANNEL.messageBuilder(StorageItemUpdatePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT).decoder(StorageItemUpdatePacket::decode).encoder(StorageItemUpdatePacket::encode).consumerMainThread(StorageItemUpdatePacket::handle).add();
     }
 
-    public static void sentToPlayer(StorageItemUpdatePacket packet, ServerPlayer player) {
+    public static void sendToPlayer(StorageItemUpdatePacket packet, ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 }
