@@ -67,8 +67,8 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
         pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 109, 0XFF8B8B8B); // Storage display area background
 
         // Draw slot backgrounds for storage items (9x5 grid)
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 9; col++) {
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
                 int slotX = x + GRID_START_X + col * SLOT_SIZE;
                 int slotY = y + GRID_START_Y + row * SLOT_SIZE;
                 pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFFC6C6C6);
@@ -194,7 +194,7 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
     public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
         List<ItemStack> items = menu.getClientItems();
         int maxRows = (items.size() + GRID_COLS - 1) / GRID_COLS;
-        int maxScroll = Math.min(0, maxRows - GRID_ROWS);
+        int maxScroll = Math.max(0, maxRows - GRID_ROWS);
 
         if (pDelta > 0) {
             scrollOffset = Math.max(0, scrollOffset - 1);
