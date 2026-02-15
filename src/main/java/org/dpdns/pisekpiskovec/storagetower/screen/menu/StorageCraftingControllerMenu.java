@@ -61,7 +61,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
     public void setSearchFilter(String searchFilter) {
         this.searchFilter = searchFilter;
-        updateClientItemList();
+        if (blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide) updateClientItemList();
     }
 
     public String getSearchFilter() {
@@ -197,7 +197,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         }
     }
 
-    private void updateClientItemList() {
+    public void updateClientItemList() {
         if (blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide) return;
 
         TowerNetwork network = blockEntity.getTower();

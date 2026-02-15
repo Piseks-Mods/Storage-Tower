@@ -1,7 +1,6 @@
 package org.dpdns.pisekpiskovec.storagetower.screen.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -13,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.SearchFilterPacket;
 import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageCraftingControllerMenu;
 
 import java.util.List;
@@ -51,7 +51,7 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
     }
 
     private void onSearchChanged(String newValue) {
-        menu.setSearchFilter(newValue);
+        ModNetworking.sendToServer(new SearchFilterPacket(newValue));
         scrollOffset = 0;
     }
 
@@ -226,12 +226,5 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
     protected void containerTick() {
         super.containerTick();
         if (this.searchBox != null) this.searchBox.tick();
-    }
-
-    @Override
-    public void resize(Minecraft pMinecraft, int pWidth, int pHeight) {
-        String searchText = this.searchBox.getValue();
-        super.resize(pMinecraft, pWidth, pHeight);
-        this.searchBox.setValue(searchText);
     }
 }
