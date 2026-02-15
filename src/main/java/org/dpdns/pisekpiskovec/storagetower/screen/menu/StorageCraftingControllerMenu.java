@@ -77,18 +77,21 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
     }
 
     public void clickItemGrid(int gridSlot, int button, ClickType clickType, Player player) {
-        if (gridSlot < 0 || gridSlot >= clientItems.size()) return;
-
-        ItemStack displayStack = clientItems.get(gridSlot);
-        if (displayStack.isEmpty()) return;
         if (player.level().isClientSide) return;
 
         TowerNetwork network = blockEntity.getTower();
         if (network == null) return;
 
+        List<ItemStack> serverItems = network.getAllItems(searchFilter);
+        if (gridSlot < 0 || gridSlot >= serverItems.size()) return;
+
+        ItemStack displayStack = serverItems.get(gridSlot);
+        if (displayStack.isEmpty()) return;
+
         if (clickType == ClickType.PICKUP) {
             if (button == 0) { // Left click
-                ItemStack extracted = network.extractItem(displayStack, Math.min(displayStack.getCount(), displayStack.getMaxStackSize()), false);
+                int amount = Math.min(displayStack.getCount(), displayStack.getMaxStackSize());
+                ItemStack extracted = network.extractItem(displayStack, amount, false);
                 if (!extracted.isEmpty()) player.containerMenu.setCarried(extracted);
             } else if (button == 1) { // Right click
                 ItemStack extracted = network.extractItem(displayStack, 1, false);
@@ -100,7 +103,8 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
             }
         } else if (clickType == ClickType.QUICK_MOVE) {
             if (button == 0) { // Shift+Left click
-                ItemStack extracted = network.extractItem(displayStack, Math.min(displayStack.getCount(), displayStack.getMaxStackSize()), false);
+                int amount = Math.min(displayStack.getCount(), displayStack.getMaxStackSize());
+                ItemStack extracted = network.extractItem(displayStack, amount, false);
                 if (!extracted.isEmpty()) if (!player.getInventory().add(extracted)) player.drop(extracted, false);
             } else if (button == 1) { // Shift+Right click
                 ItemStack extracted = network.extractItem(displayStack, 1, false);
