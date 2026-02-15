@@ -8,6 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.dpdns.pisekpiskovec.storagetower.StorageTower;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.GridInsertPacket;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.SearchFilterPacket;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.StorageItemUpdatePacket;
 
@@ -25,6 +26,7 @@ public class ModNetworking {
         CHANNEL.messageBuilder(StorageItemUpdatePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT).decoder(StorageItemUpdatePacket::decode).encoder(StorageItemUpdatePacket::encode).consumerMainThread(StorageItemUpdatePacket::handle).add(); // Server -> Client: Storage item updates
         CHANNEL.messageBuilder(GridClickPacket.class, id(), NetworkDirection.PLAY_TO_SERVER).decoder(GridClickPacket::decode).encoder(GridClickPacket::encode).consumerMainThread(GridClickPacket::handle).add(); // Client -> Server: Grid Clicks
         CHANNEL.messageBuilder(SearchFilterPacket.class, id(), NetworkDirection.PLAY_TO_SERVER).decoder(SearchFilterPacket::decode).encoder(SearchFilterPacket::encode).consumerMainThread(SearchFilterPacket::handle).add(); // Client -> Server: Search Filter
+        CHANNEL.messageBuilder(GridInsertPacket.class, id(), NetworkDirection.PLAY_TO_SERVER).decoder(GridInsertPacket::decode).encoder(GridInsertPacket::encode).consumerMainThread(GridInsertPacket::handle).add(); // Client -> Server: Grid Insert
     }
 
     public static void sendToPlayer(StorageItemUpdatePacket packet, ServerPlayer player) {
@@ -36,6 +38,10 @@ public class ModNetworking {
     }
 
     public static void sendToServer(SearchFilterPacket packet) {
+        CHANNEL.sendToServer(packet);
+    }
+
+    public static void sendToServer(GridInsertPacket packet) {
         CHANNEL.sendToServer(packet);
     }
 }

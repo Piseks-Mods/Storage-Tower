@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
 import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.GridClickPacket;
+import org.dpdns.pisekpiskovec.storagetower.network.packet.GridInsertPacket;
 import org.dpdns.pisekpiskovec.storagetower.network.packet.SearchFilterPacket;
 import org.dpdns.pisekpiskovec.storagetower.screen.menu.StorageControllerMenu;
 
@@ -154,6 +155,13 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
         int relY = (int) (pMouseY - topPos);
 
         if (relX >= GRID_START_X && relX < GRID_START_X + GRID_COLS * SLOT_SIZE && relY >= GRID_START_Y && relY < GRID_START_Y + GRID_ROWS * SLOT_SIZE) {
+            ItemStack carried = this.menu.getCarried();
+            if (!carried.isEmpty()) {
+                ModNetworking.sendToServer(new GridInsertPacket(pButton == 0));
+                return true;
+            }
+
+            // Not carrying item
             int col = (relX - GRID_START_X) / SLOT_SIZE;
             int row = (relY - GRID_START_Y) / SLOT_SIZE;
             int gridSlot = scrollOffset * GRID_COLS + row * GRID_COLS + col;
