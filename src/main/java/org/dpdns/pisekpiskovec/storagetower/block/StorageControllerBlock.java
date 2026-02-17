@@ -1,7 +1,6 @@
 package org.dpdns.pisekpiskovec.storagetower.block;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -17,6 +16,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageControllerBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCraftingControllerBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageInterfaceBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 public class StorageControllerBlock extends BaseEntityBlock {
@@ -42,8 +43,6 @@ public class StorageControllerBlock extends BaseEntityBlock {
             if (be instanceof StorageControllerBlockEntity controller) {
                 if (controller.getTower() != null && controller.getTower().getTotalSlots() > 0) {
                     NetworkHooks.openScreen(serverPlayer, controller, pPos);
-                } else {
-                    ((ServerPlayer) pPlayer).sendSystemMessage(Component.translatableWithFallback("container.storagetower.invalid_tower", "Invalid tower!"), true);
                 }
             }
         }
@@ -53,6 +52,35 @@ public class StorageControllerBlock extends BaseEntityBlock {
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
         return createTickerHelper(pBlockEntityType, ModBlockEntities.STORAGE_CONTROLLER.get(), (lvl, pos, st, be) -> be.tick(lvl, pos, st));
+    }
+
+    @Override
+    public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pMovedByPiston) {
+        super.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);
+        if (pState.getBlock() != pOldState.getBlock()) {
+            invalidateNearbyControllers(pLevel, pPos);
+        }
+    }
+
+    private void invalidateNearbyControllers(Level pLevel, BlockPos pPos) {
+        if (pLevel.isClientSide) return;
+
+        for (int y = -64; y <= 320; y++) {
+            BlockPos checkPos = pPos.offset(0, y, 0);
+            if (!pLevel.isLoaded(checkPos)) continue;
+
+            var state = pLevel.getBlockState(checkPos);
+            if (state.is(ModBlocks.STORAGE_CONTROLLER.get()) || state.is(ModBlocks.STORAGE_CONTROLLER_CRAFTING.get()) || state.is(ModBlocks.STORAGE_INTERFACE.get())) {
+                BlockEntity be = pLevel.getBlockEntity(checkPos);
+                if (be instanceof StorageControllerBlockEntity controller) {
+                    controller.invalidateTower();
+                } else if (be instanceof StorageCraftingControllerBlockEntity controllerr) {
+                    controllerr.invalidateTower();
+                } else if (be instanceof StorageInterfaceBlockEntity iface) {
+                    iface.invalidateTower();
+                }
+            }
+        }
     }
 
     @Override
