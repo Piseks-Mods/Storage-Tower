@@ -16,6 +16,7 @@ public class TowerNetwork {
     private final BlockPos masterPos;
     private final List<StorageCrateBlockEntity> crates = new ArrayList<>();
     private boolean valid = true;
+    public static final int MAX_SCAN_DISTANCE = 64;
 
     public TowerNetwork(Level level, BlockPos masterPos) {
         this.level = level;
@@ -27,23 +28,31 @@ public class TowerNetwork {
         crates.clear();
 
         // Scan upwards
+        int scanDistance = 0;
         BlockPos pos = masterPos.above();
-        while (isTowerBlock(pos)) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof StorageCrateBlockEntity crate) {
-                crates.add(crate);
-                crate.setTower(this);
+        while (scanDistance <= MAX_SCAN_DISTANCE && level.isLoaded(pos)) {
+            if (isTowerBlock(pos)) {
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof StorageCrateBlockEntity crate) {
+                    crates.add(crate);
+                    crate.setTower(this);
+                    scanDistance = 0;
+                } else scanDistance++;
             }
             pos = pos.above();
         }
 
         // Scan downwards
+        scanDistance = 0;
         pos = masterPos.below();
-        while (isTowerBlock(pos)) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof StorageCrateBlockEntity crate) {
-                crates.add(crate);
-                crate.setTower(this);
+        while (scanDistance <= MAX_SCAN_DISTANCE && level.isLoaded(pos)) {
+            if (isTowerBlock(pos)) {
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof StorageCrateBlockEntity crate) {
+                    crates.add(crate);
+                    crate.setTower(this);
+                    scanDistance = 0;
+                } else scanDistance++;
             }
             pos = pos.below();
         }
