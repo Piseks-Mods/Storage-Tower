@@ -94,7 +94,8 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                 ItemStack extracted = network.extractItem(displayStack, amount, false);
                 if (!extracted.isEmpty()) player.containerMenu.setCarried(extracted);
             } else if (button == 1) { // Right click
-                ItemStack extracted = network.extractItem(displayStack, 1, false);
+                int amount = ((int) Math.ceil(Math.min(displayStack.getCount(), displayStack.getMaxStackSize()) / 2.0));
+                ItemStack extracted = network.extractItem(displayStack, amount, false);
                 if (!extracted.isEmpty()) {
                     ItemStack carried = player.containerMenu.getCarried();
                     if (carried.isEmpty()) player.containerMenu.setCarried(extracted);
