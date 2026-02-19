@@ -2,6 +2,7 @@ package org.dpdns.pisekpiskovec.storagetower;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -50,6 +51,14 @@ public class StorageTower {
 
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
+            event.accept(ModBlocks.STORAGE_CRATE);
+            event.accept(ModBlocks.STORAGE_INTERFACE);
+            event.accept(ModBlocks.STORAGE_CONTROLLER);
+            event.accept(ModBlocks.STORAGE_CONTROLLER_CRAFTING);
+        } else if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(ModItems.STORAGE_UPGRADE);
+        }
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
