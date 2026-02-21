@@ -64,7 +64,7 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
         int x = leftPos;
         int y = topPos;
 
-        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFFC6C6C6); // Main background
+        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, blockEntity.getTower().getTotalSlots() == 0 ? 0xFF393939 : 0xFFC6C6C6); // Main background
         pGuiGraphics.fill(x + 7, y + 4, x + 169, y + 16, 0xFF000000); // Search box background
 
         // Storage display area background

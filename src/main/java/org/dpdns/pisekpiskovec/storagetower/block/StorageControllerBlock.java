@@ -41,9 +41,7 @@ public class StorageControllerBlock extends BaseEntityBlock {
         if (!pLevel.isClientSide && pPlayer instanceof ServerPlayer serverPlayer) {
             BlockEntity be = pLevel.getBlockEntity(pPos);
             if (be instanceof StorageControllerBlockEntity controller) {
-                if (controller.getTower() != null && controller.getTower().getTotalSlots() > 0) {
-                    NetworkHooks.openScreen(serverPlayer, controller, pPos);
-                }
+                NetworkHooks.openScreen(serverPlayer, controller, pPos);
             }
         }
         return InteractionResult.sidedSuccess(pLevel.isClientSide);
