@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "storagetower:block/storge_controller_crafting"
+  }
+}
