@@ -1,0 +1,8 @@
+{
+  "block.storagetower.storage_crate": "Storage Crate",
+  "block.storagetower.storage_controller": "Storage Controller",
+  "block.storagetower.storage_interface": "Storage Interface",
+  "block.storagetower.storage_controller_crafting": "Storage Controller with Crafting Grid",
+  "item.storagetower.storage_upgrade": "Storage Upgrade",
+  "gui.storagetower.search": "Search"
+}
