@@ -64,32 +64,32 @@ public class StorageCraftingControllerScreen extends AbstractContainerScreen<Sto
         int x = leftPos;
         int y = topPos;
 
-        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, blockEntity.getTower().getTotalSlots() == 0 ? 0xFF393939 : 0xFFC6C6C6); // Main background
+        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6); // Main background
         pGuiGraphics.fill(x + 7, y + 4, x + 169, y + 16, 0xFF000000); // Search box background
 
         // Storage display area background
-        pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 55, 0xFF8B8B8B);
+        pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 55, blockEntity.getTower().getTotalSlots() > 0 ? 0xFF935A10 : 0xFF8B8B8B);
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int slotX = x + GRID_START_X + col * SLOT_SIZE;
                 int slotY = y + GRID_START_Y + row * SLOT_SIZE;
-                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFFC6C6C6);
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6);
             }
         }
 
         // Crafting grid area background
-        pGuiGraphics.fill(x + 52, y + 57, x + 106, y + 111, 0xFF8B8B8B);
+        pGuiGraphics.fill(x + 52, y + 57, x + 106, y + 111, blockEntity.getTower().getTotalSlots() > 0 ? 0xFF935A10 : 0xFF8B8B8B);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 int slotX = x + 53 + col * SLOT_SIZE;
                 int slotY = y + 58 + row * SLOT_SIZE;
-                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFFC6C6C6);
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6);
             }
         }
 
         // Crafting result area background
-        pGuiGraphics.fill(x + 142, y + 72, x + 160, y + 90, 0xFF8B8B8B);
-        pGuiGraphics.fill(x + 143, y + 73, x + 159, y + 89, 0xFFC6C6C6);
+        pGuiGraphics.fill(x + 142, y + 72, x + 160, y + 90, blockEntity.getTower().getTotalSlots() > 0 ? 0xFF935A10 : 0xFF8B8B8B);
+        pGuiGraphics.fill(x + 143, y + 73, x + 159, y + 89, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6);
     }
 
     @Override
