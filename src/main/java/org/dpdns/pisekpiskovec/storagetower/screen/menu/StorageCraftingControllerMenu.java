@@ -42,7 +42,13 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
         // Crafting grid
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 3; ++col) {
-                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 53 + col * 18, 58 + row * 18));
+                this.addSlot(new Slot(this.craftingContainer, col + row * 3, 53 + col * 18, 58 + row * 18) {
+                    @Override
+                    public void setChanged() {
+                        super.setChanged();
+                        slotsChanged(craftingContainer);
+                    }
+                });
             }
         }
 
@@ -137,7 +143,7 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
 
             resultContainer.setItem(0, result);
             menu.setRemoteSlot(0, result);
-            menu.broadcastChanges();
+            ((ServerPlayer) player).connection.send(new net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), 0, result));
         }
     }
 
