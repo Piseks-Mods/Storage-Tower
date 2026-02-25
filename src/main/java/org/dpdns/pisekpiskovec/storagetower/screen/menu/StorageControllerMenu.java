@@ -116,12 +116,18 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         TowerNetwork network = blockEntity.getTower();
         if (network != null) {
             ItemStack remaining = network.insertItem(slotStack, false);
-            slotStack.setCount(remaining.getCount());
-            if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
-            else slot.setChanged();
-            updateClientItemList();
+
+            if (remaining.getCount() < originalStack.getCount()) {
+                slotStack.setCount(remaining.getCount());
+                if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
+                else slot.setChanged();
+                updateClientItemList();
+                return originalStack;
+            } else {
+                return ItemStack.EMPTY;
+            }
         }
-        return originalStack;
+        return ItemStack.EMPTY;
     }
 
     @Override

@@ -171,21 +171,29 @@ public class StorageCraftingControllerMenu extends AbstractContainerMenu {
                     TowerNetwork network = blockEntity.getTower();
                     if (network != null) {
                         ItemStack remaining = network.insertItem(slotStack, false);
-                        slotStack.setCount(remaining.getCount());
-                        if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
-                        else slot.setChanged();
-                        updateClientItemList();
-                        return itemStack;
-                    }
 
-                    if (pIndex < 37) if (!this.moveItemStackTo(slotStack, 37, 46, false)) return ItemStack.EMPTY;
-                    else if (!this.moveItemStackTo(slotStack, 10, 37, false)) return ItemStack.EMPTY;
+                        if (remaining.getCount() < itemStack.getCount()) {
+                            slotStack.setCount(remaining.getCount());
+                            if (remaining.isEmpty()) slot.set(ItemStack.EMPTY);
+                            else slot.setChanged();
+                            updateClientItemList();
+                            return itemStack;
+                        } else {
+                            if (pIndex < 37) {
+                                if (!this.moveItemStackTo(slotStack, 37, 46, false)) return ItemStack.EMPTY;
+                            } else {
+                                if (!this.moveItemStackTo(slotStack, 10, 37, false)) return ItemStack.EMPTY;
+                            }
+                        }
+                    }
                 }
             }
 
             if (slotStack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
             else slot.setChanged();
+
             if (slotStack.getCount() == itemStack.getCount()) return ItemStack.EMPTY;
+
             slot.onTake(pPlayer, slotStack);
             if (pIndex == 0) pPlayer.drop(slotStack, false);
         }
