@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "S": {
+      "tag": "minecraft:wooden_slabs"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "PDP",
+    "PSP"
+  ],
+  "result": {
+    "item": "storagetower:storage_upgrade"
+  },
+  "show_notification": true
+}
