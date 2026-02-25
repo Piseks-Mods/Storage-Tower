@@ -1,0 +1,8 @@
+{
+  "values": [
+    "storagetower:storage_crate",
+    "storagetower:storage_controller",
+    "storagetower:storage_controller_crafting",
+    "storagetower:storage_interface"
+  ]
+}
