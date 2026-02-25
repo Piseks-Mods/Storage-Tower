@@ -2,6 +2,8 @@ package org.dpdns.pisekpiskovec.storagetower.block.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Containers;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -139,5 +141,13 @@ public class StorageCrateBlockEntity extends BlockEntity {
     }
 
     public void tick(Level lvl, BlockPos pos, BlockState state) {
+    }
+
+    public void drops() {
+        SimpleContainer container = new SimpleContainer(inventory.getSlots());
+        for (int i = 0; i < inventory.getSlots(); i++) {
+            container.setItem(i, inventory.getStackInSlot(i));
+        }
+        Containers.dropContents(this.level, this.worldPosition, container);
     }
 }

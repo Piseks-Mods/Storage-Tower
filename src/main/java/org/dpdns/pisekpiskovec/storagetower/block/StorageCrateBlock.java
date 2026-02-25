@@ -61,6 +61,7 @@ public class StorageCrateBlock extends BaseEntityBlock {
             BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
             if (blockEntity instanceof StorageCrateBlockEntity crate) {
                 crate.invalidateTower();
+                crate.drops();
             }
             invalidateNearbyControllers(pLevel, pPos);
         }
