@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:barrel"
+  },
+  "base": {
+    "item": "minecraft:barrel"
+  },
+  "result": {
+    "item": "storagetower:storage_crate"
+  },
+  "template": {
+    "item": "storagetower:storage_upgrade"
+  }
+}

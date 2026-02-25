@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:hopper"
+  },
+  "base": {
+    "item": "storagetower:storage_crate"
+  },
+  "result": {
+    "item": "storagetower:storage_interface"
+  },
+  "template": {
+    "item": "storagetower:storage_upgrade"
+  }
+}

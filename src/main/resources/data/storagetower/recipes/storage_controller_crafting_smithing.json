@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:crafting_table"
+  },
+  "base": {
+    "item": "storagetower:storage_controller"
+  },
+  "result": {
+    "item": "storagetower:storage_controller_crafting"
+  },
+  "template": {
+    "item": "storagetower:storage_upgrade"
+  }
+}
