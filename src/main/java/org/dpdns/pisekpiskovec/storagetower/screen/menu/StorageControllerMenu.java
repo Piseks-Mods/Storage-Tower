@@ -22,6 +22,7 @@ public class StorageControllerMenu extends AbstractContainerMenu {
     private String searchFilter = "";
     private List<ItemStack> clientItems = new ArrayList<>(); // Client-side cache
     private int updateCooldown = 0; // Track last update to avoid spam
+    private int clientTotalSlots = 0;
 
     public StorageControllerMenu(int id, Inventory playerInv, BlockEntity entity) {
         super(ModMenuTypes.STORAGE_CONTROLLER.get(), id);
@@ -49,8 +50,13 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         return searchFilter;
     }
 
-    public void updateClientItems(List<ItemStack> items) {
+    public void updateClientItems(List<ItemStack> items, int totalSlots) {
         this.clientItems = new ArrayList<>(items);
+        this.clientTotalSlots = totalSlots;
+    }
+
+    public int getClientTotalSlots() {
+        return this.clientTotalSlots;
     }
 
     public List<ItemStack> getClientItems() {
@@ -149,11 +155,12 @@ public class StorageControllerMenu extends AbstractContainerMenu {
         TowerNetwork network = blockEntity.getTower();
         if (network != null && network.isValid()) {
             List<ItemStack> items = network.getAllItems(searchFilter);
+            int totalSlots = network.getTotalSlots();
 
             // Send to all players viewing this menu
             for (Player player : blockEntity.getLevel().players()) {
                 if (player instanceof ServerPlayer serverPlayer && player.containerMenu == this) {
-                    ModNetworking.sendToPlayer(new StorageItemUpdatePacket(this.containerId, items), serverPlayer);
+                    ModNetworking.sendToPlayer(new StorageItemUpdatePacket(this.containerId, items, totalSlots), serverPlayer);
                 }
             }
         }

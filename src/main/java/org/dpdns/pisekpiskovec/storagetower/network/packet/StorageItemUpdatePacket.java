@@ -13,10 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public record StorageItemUpdatePacket(int windowId, List<ItemStack> items) {
+public record StorageItemUpdatePacket(int windowId, List<ItemStack> items, int totalSlots) {
 
     public static void encode(StorageItemUpdatePacket packet, FriendlyByteBuf buffer) {
         buffer.writeInt(packet.windowId);
+        buffer.writeInt(packet.totalSlots);
         buffer.writeInt(packet.items.size());
         for (int i = 0; i < packet.items.size(); i++) {
             ItemStack stack = packet.items.get(i);
@@ -34,6 +35,7 @@ public record StorageItemUpdatePacket(int windowId, List<ItemStack> items) {
 
     public static StorageItemUpdatePacket decode(FriendlyByteBuf buffer) {
         int windowId = buffer.readInt();
+        int totalSlots = buffer.readInt();
         int size = buffer.readInt();
         List<ItemStack> items = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
@@ -51,7 +53,7 @@ public record StorageItemUpdatePacket(int windowId, List<ItemStack> items) {
                 items.add(stack);
             }
         }
-        return new StorageItemUpdatePacket(windowId, items);
+        return new StorageItemUpdatePacket(windowId, items, totalSlots);
     }
 
     public static void handle(StorageItemUpdatePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -66,20 +68,14 @@ public record StorageItemUpdatePacket(int windowId, List<ItemStack> items) {
     }
 
     private static void handleClientSide(StorageItemUpdatePacket packet) {
-        for (int i = 0; i < Math.min(10, packet.items.size()); i++) {
-            ItemStack item = packet.items.get(i);
-        }
-
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
-            return;
-        }
+        if (mc.player == null) return;
 
         if (mc.player.containerMenu.containerId == packet.windowId) {
             if (mc.player.containerMenu instanceof StorageControllerMenu menu) {
-                menu.updateClientItems(packet.items);
+                menu.updateClientItems(packet.items, packet.totalSlots);
             } else if (mc.player.containerMenu instanceof StorageCraftingControllerMenu menu) {
-                menu.updateClientItems(packet.items);
+                menu.updateClientItems(packet.items, packet.totalSlots);
             }
         }
     }

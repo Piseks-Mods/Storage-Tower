@@ -65,16 +65,16 @@ public class StorageControllerScreen extends AbstractContainerScreen<StorageCont
         int x = leftPos;
         int y = topPos;
 
-        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6); // Main background
+        pGuiGraphics.fill(x, y, x + imageWidth, y + imageHeight, menu.getClientTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6); // Main background
         pGuiGraphics.fill(x + 7, y + 4, x + 169, y + 16, 0xFF000000); // Search box background
-        pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 109, blockEntity.getTower().getTotalSlots() > 0 ? 0xFF935A10 : 0xFF8B8B8B); // Storage display area background
+        pGuiGraphics.fill(x + 7, y + 17, x + 169, y + 109, menu.getClientTotalSlots() > 0 ? 0xFF935A10 : 0xFF8B8B8B); // Storage display area background
 
         // Draw slot backgrounds for storage items (9x5 grid)
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int slotX = x + GRID_START_X + col * SLOT_SIZE;
                 int slotY = y + GRID_START_Y + row * SLOT_SIZE;
-                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, blockEntity.getTower().getTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6);
+                pGuiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, menu.getClientTotalSlots() > 0 ? 0xFFCE954B : 0xFFC6C6C6);
             }
         }
     }
