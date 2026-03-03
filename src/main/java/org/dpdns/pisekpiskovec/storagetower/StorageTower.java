@@ -9,12 +9,14 @@ import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.ModBlockEntities;
+import org.dpdns.pisekpiskovec.storagetower.config.ModConfig;
 import org.dpdns.pisekpiskovec.storagetower.item.ModItems;
 import org.dpdns.pisekpiskovec.storagetower.network.ModNetworking;
 import org.dpdns.pisekpiskovec.storagetower.screen.ModMenuTypes;
@@ -43,6 +45,8 @@ public class StorageTower {
 
         MinecraftForge.EVENT_BUS.register(this);
         modEventBus.addListener(this::addCreative);
+
+        ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, ModConfig.COMMON_SPEC);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

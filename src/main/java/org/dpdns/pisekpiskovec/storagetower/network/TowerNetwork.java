@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.ItemStackHandler;
 import org.dpdns.pisekpiskovec.storagetower.block.ModBlocks;
 import org.dpdns.pisekpiskovec.storagetower.block.entity.StorageCrateBlockEntity;
+import org.dpdns.pisekpiskovec.storagetower.config.ModConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ public class TowerNetwork {
     private final BlockPos masterPos;
     private final List<StorageCrateBlockEntity> crates = new ArrayList<>();
     private boolean valid = true;
-    public static final int MAX_SCAN_DISTANCE = 64;
+    public static final int MAX_SCAN_DISTANCE = ModConfig.COMMON.maxScanDistance.get();
 
     public TowerNetwork(Level level, BlockPos masterPos) {
         this.level = level;
