@@ -15,8 +15,8 @@ Simple and bit cursed storage mod.
 
 ### Storage Interface
 
-- Allows to store items using hoppers and pipes
-- Extraction of items comming soon!
+- Allows storing items using hoppers and pipes
+- Extraction of items coming soon!
 
 ### Storage Upgrade
 
