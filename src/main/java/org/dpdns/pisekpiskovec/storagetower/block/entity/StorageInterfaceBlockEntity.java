@@ -14,10 +14,13 @@ import org.dpdns.pisekpiskovec.storagetower.network.TowerNetwork;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class StorageInterfaceBlockEntity extends BlockEntity {
     private TowerNetwork tower;
     private final LazyOptional<IItemHandler> itemHandlerLazy = LazyOptional.of(this::createHandler);
     private int scanCooldown = 0;
+    private int extractionIndex = 0;
 
     public StorageInterfaceBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.STORAGE_INTERFACE.get(), pPos, pBlockState);
@@ -40,11 +43,17 @@ public class StorageInterfaceBlockEntity extends BlockEntity {
         return new IItemHandler() {
             @Override
             public int getSlots() {
-                return tower != null ? tower.getTotalSlots() : 0;
+                return tower != null ? Math.min(tower.getTotalSlots(), 100) : 0;
             }
 
             @Override
             public @NotNull ItemStack getStackInSlot(int slot) {
+                if (tower == null) return ItemStack.EMPTY;
+
+                List<ItemStack> items = tower.getAllItems();
+                if (slot >= 0 && slot < items.size()) {
+                    return items.get(slot);
+                }
                 return ItemStack.EMPTY;
             }
 
@@ -56,7 +65,29 @@ public class StorageInterfaceBlockEntity extends BlockEntity {
 
             @Override
             public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-                return ItemStack.EMPTY;
+                if (tower == null) return ItemStack.EMPTY;
+
+                // Get all items from storage
+                List<ItemStack> items = tower.getAllItems();
+                if (items.isEmpty()) return ItemStack.EMPTY;
+
+                // Use round-robin extraction to cycle through different items
+                // This prevents hoppers from always extracting the same item type
+                if (!simulate) extractionIndex = extractionIndex % Math.max(1, items.size());
+
+                int indexToExtract = extractionIndex % Math.max(1, items.size());
+                ItemStack targetStack = items.get(indexToExtract);
+                if (targetStack.isEmpty()) return ItemStack.EMPTY;
+
+                // Extract the requested amount (or less if not available)
+                int toExtract = Math.min(amount, Math.min(targetStack.getCount(), targetStack.getMaxStackSize()));
+                ItemStack extracted = tower.extractItem(targetStack, toExtract, simulate);
+
+                // Move to next item for next extraction
+                if (!simulate && !extracted.isEmpty()) {
+                    extractionIndex++;
+                }
+                return extracted;
             }
 
             @Override
